@@ -6,19 +6,24 @@ Created on Tue Dec 12 13:47:48 2017
 @author: lessig
 """
 
+import numpy as np
+import matplotlib.pyplot as plt
+
 from ray import Ray
 from camera import Camera
 from sphere import Sphere
+from plane import Plane
 from scene import Scene
 from basic_integrator import BasicIntegrator
-import numpy as np
 
 def createScene() :
     
     scene = Scene()
     
-    sphere = Sphere( np.array([0.0, 3.0, 0.0]), 1.0)
+    plane = Plane(np.array([0, 0, 10]), np.array([0, 1, -0.5]))
+    sphere = Sphere( np.array([0.0, 0.0, 3.0]), 1.0)
     scene.objects.append( sphere)
+    scene.objects.append( plane)
     
     return scene
 
@@ -29,9 +34,9 @@ def render( res_x, res_y, scene, integrator) :
     
     for ix in range( res_x) :
         for iy in range( res_y) :
-            
+
             r = cam.generateRay( ix, iy)
-            
+
             ellval = integrator.ell( scene, r)
             cam.image[ix,iy] = ellval
             
@@ -44,4 +49,7 @@ scene = createScene()
 
 im = render( 512, 512, scene, integrator)
 
-            
+plt.imshow( im)
+plt.show()
+
+

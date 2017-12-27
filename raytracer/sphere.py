@@ -24,8 +24,8 @@ class Sphere( Shape) :
         # compute intersection point with sphere
         q = ray.o - self.pos
         
-        c = np.dot( q, q) - self.r
-        b = np.dot( q, ray.d)
+        c = np.dot( q, q) - (self.r * self.r)
+        b = 2.0 * np.dot( q, ray.d)
         
         temp = b*b - 4*c 
         if( temp < 0.0) :
