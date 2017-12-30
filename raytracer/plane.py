@@ -16,7 +16,7 @@ class Plane( Shape):
         self.pos = pos
         self.n = normal/np.linalg.norm(normal)
 
-    def intersect(self, ray):
+    def intersect(self, ray, intersection):
 
         o = np.dot(ray.d, self.n)
 
@@ -27,6 +27,8 @@ class Plane( Shape):
 
         if (t > 0) & (t < ray.t):
             ray.t = t
+            intersection.pos = ray.o + ray.t*ray.d
+            intersection.n = self.n
             return True
 
         return False

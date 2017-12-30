@@ -19,7 +19,7 @@ class Sphere( Shape) :
         self.pos = pos
         self.r = r
         
-    def intersect(self, ray):
+    def intersect(self, ray, intersection):
         
         # compute intersection point with sphere
         q = ray.o - self.pos
@@ -48,7 +48,11 @@ class Sphere( Shape) :
         if sol < ray.t :
             ray.t = sol;
             return True
-            
+
+        intersection.pos = ray.o + ray.t*ray.d
+        intersection.n = intersection.pos - self.pos
+        intersection.n /= np.linalg.norm(intersection.n)
+
         return False
         
         

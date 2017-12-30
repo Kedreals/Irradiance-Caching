@@ -16,7 +16,7 @@ class Shape :
     def __init__(self) :
         Shape.objectid += 1
     
-    def intersect(self, ray):
+    def intersect(self, ray, intersection):
         raise NotImplementedError()
         
         

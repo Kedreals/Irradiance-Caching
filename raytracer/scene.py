@@ -11,11 +11,11 @@ class Scene :
     def __init__(self) :
         self.objects = []
         
-    def intersect( self, ray) :
+    def intersect( self, ray, intersection) :
         
         res = False
         for obj in self.objects :
-            res |= obj.intersect( ray)
+            res |= obj.intersect( ray, intersection)
             
         return res
             
