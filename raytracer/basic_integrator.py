@@ -15,7 +15,9 @@ class BasicIntegrator(Integrator) :
     def ell(self, scene, ray):
         intersection = Intersection(np.array([0., 0., 0.]), np.array([0.,1.,0.]))
         if( scene.intersect(ray, intersection)) :
-            return np.max([0.0, np.dot(intersection.n, np.array([0.0, 1., 0.]))])*np.ones(3)
+            ldir = np.array([-1.0, 0., -1.0])
+            ldir /= np.linalg.norm(ldir)
+            return np.max([0.0, np.dot(intersection.n, ldir)])*np.ones(3)
         
         return np.array([0., 0., 0.])
         

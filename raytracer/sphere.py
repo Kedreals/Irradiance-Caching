@@ -33,7 +33,7 @@ class Sphere( Shape) :
         
         temp = np.sqrt( temp)
         s1 = 1.0/2.0 * ( -b + temp) 
-        s2 = 1.0/2.0 * ( -b + temp)
+        s2 = 1.0/2.0 * ( -b - temp)
         
         sol = s1
         if s1 < 0.0 and s2 < 0.0:
@@ -47,11 +47,10 @@ class Sphere( Shape) :
             
         if sol < ray.t :
             ray.t = sol;
+            intersection.pos = ray.o + ray.t * ray.d
+            intersection.n = +intersection.pos - self.pos
+            intersection.n /= np.linalg.norm(intersection.n)
             return True
-
-        intersection.pos = ray.o + ray.t*ray.d
-        intersection.n = intersection.pos - self.pos
-        intersection.n /= np.linalg.norm(intersection.n)
 
         return False
         
