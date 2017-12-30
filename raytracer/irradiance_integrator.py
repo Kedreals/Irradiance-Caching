@@ -1,15 +1,16 @@
 from integrator import Integrator
-from irradiance_sample import Irradiance_Sample as Irr_S
+import irradiance_sample
 import numpy as np
 
 class IrradianceIntegrator(Integrator):
 
-    def __init__(self, minPixelDist, maxPixelDist, maxCosAngleDiff):
+    def __init__(self, minPixelDist, maxPixelDist, minWeight, maxCosAngleDiff):
 
         super().__init__()
 
         self.minPixelDist = minPixelDist
         self.maxPixelDist = maxPixelDist
+        self.minWeight = minWeight
         self.maxCosAngleDiff = maxCosAngleDiff
 
     def ell(self, scene, ray):
@@ -18,10 +19,10 @@ class IrradianceIntegrator(Integrator):
 
         return 0.0
 
-    def compute_Error(self, newPoint, sample):
+    def computeError(self, newPoint, sample):
 
-        perr = (newPoint - sample.pos).length / sample.maxDist
-        nerr = np.sqrt((1.0 - np.dot(newPoint.normal, sample.normal)) / (1.0 - self.maxCosAngleDiff))
+        perr = np.linalg.norm(newPoint.pos - sample.pos) / sample.maxDist
+        nerr = np.sqrt((1.0 - np.dot(newPoint.normal, sample.normal)) / (1.0 - newPoint.maxCosAngleDiff))
 
         err = np.max(perr, nerr)
 
@@ -29,4 +30,7 @@ class IrradianceIntegrator(Integrator):
             weight = 1.0 - err
             newPoint.irradiance += weight * sample.irradiance
             newPoint.avgLightDir += weight * sample.avgLightDir
-            self.sumIrradiance
+            newPoint.sumWeight += weight
+
+    def interpolationSuccessful(self, newPoint):
+        return newPoint.sumWeight >= newPoint.minWeight
