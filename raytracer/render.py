@@ -20,10 +20,10 @@ def createScene() :
     
     scene = Scene()
     
-    plane = Plane(np.array([0, 0, 10]), np.array([0, 1, -0.5]))
+    #plane = Plane(np.array([0, 0, 10]), np.array([0, 0, 1.]))
     sphere = Sphere( np.array([0.0, 0.0, 3.0]), 1.0)
     scene.objects.append( sphere)
-    scene.objects.append( plane)
+    #scene.objects.append( plane)
     
     return scene
 
@@ -38,7 +38,7 @@ def render( res_x, res_y, scene, integrator) :
             r = cam.generateRay( ix, iy)
 
             ellval = integrator.ell( scene, r)
-            cam.image[ix,iy] = ellval
+            cam.image[ix,iy,:] = ellval
             
     return cam.image
     
