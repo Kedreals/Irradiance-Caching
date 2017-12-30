@@ -15,6 +15,7 @@ from sphere import Sphere
 from plane import Plane
 from scene import Scene
 from basic_integrator import BasicIntegrator
+from irradiance_integrator import IrradianceIntegrator
 
 def createScene() :
     
@@ -22,6 +23,7 @@ def createScene() :
     
     plane = Plane(np.array([1, 0, 0]), np.array([-1., 0., 0.]))
     sphere = Sphere( np.array([0.0, 0.0, 3.0]), 1.0)
+    sphere.ell = 1.
     scene.objects.append( sphere)
     scene.objects.append( plane)
     
@@ -44,7 +46,7 @@ def render( res_x, res_y, scene, integrator) :
     
 
 
-integrator = BasicIntegrator()
+integrator = IrradianceIntegrator(1, 1, 1, 1) #BasicIntegrator()
 scene = createScene()
 
 im = render( 512, 512, scene, integrator)

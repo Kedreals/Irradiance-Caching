@@ -29,6 +29,7 @@ class Plane( Shape):
             ray.t = t
             intersection.pos = ray.o + ray.t*ray.d
             intersection.n = self.n
+            intersection.ell = self.ell
             return True
 
         return False

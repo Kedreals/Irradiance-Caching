@@ -50,6 +50,7 @@ class Sphere( Shape) :
             intersection.pos = ray.o + ray.t * ray.d
             intersection.n = +intersection.pos - self.pos
             intersection.n /= np.linalg.norm(intersection.n)
+            intersection.ell = self.ell
             return True
 
         return False

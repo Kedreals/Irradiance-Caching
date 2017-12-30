@@ -14,6 +14,7 @@ class Shape :
     objectid = 0
     
     def __init__(self) :
+        self.ell = 0.0
         Shape.objectid += 1
     
     def intersect(self, ray, intersection):
