@@ -13,6 +13,7 @@ from ray import Ray
 from camera import Camera
 from sphere import Sphere
 from plane import Plane
+from plane import Rectangle
 from scene import Scene
 from basic_integrator import BasicIntegrator
 from irradiance_integrator import IrradianceIntegrator
@@ -21,12 +22,14 @@ def createScene() :
     
     scene = Scene()
     
-    plane = Plane(np.array([1, 0, 0]), np.array([-1., 0., 0.]))
+    plane = Rectangle(np.array([1., 0, 3.0]), np.array([-1., 0., 0.]), 0.75*np.array([1, 1]))
+
     sphere = Sphere( np.array([0.0, 0.0, 3.0]), 1.0)
-    sphere.ell = 1.
+    plane.ell = 1.
+
     scene.objects.append( sphere)
-    scene.objects.append( plane)
-    
+    scene.objects.append(plane)
+
     return scene
 
 

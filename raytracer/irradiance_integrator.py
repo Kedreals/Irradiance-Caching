@@ -26,7 +26,7 @@ class IrradianceIntegrator(Integrator):
         omega[0] = np.arcsin(np.sqrt(omega[0]))
         omega[1] *= np.pi*2
 
-        RotTheta = np.array([[1., 0., 0.], [0., np.cos(o[0]), np.sin(o[0])], [0., -np.sin(o[0]), np.cos(o[0])]])
+        RotTheta = np.array([[np.cos(o[0]), 0., np.sin(o[0])], [0., 1., 0.], [-np.sin(o[0]), 0., np.cos(o[0])]])
         RotPhi = np.array([[np.cos(o[1]), np.sin(o[1]), 0.], [-np.sin(o[1]), np.cos(o[1]), 0.], [0., 0., 1.]])
 
         r = np.zeros(3)
