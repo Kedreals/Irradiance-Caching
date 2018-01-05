@@ -2,8 +2,17 @@ import numpy as np
 
 class Irradiance_Sample():
 
-    def __init__(self, pos, normal, spectrum, maxDistance, avgLightDir):
+    @staticmethod
+    def computeSampleMaxContribution(minHitDist, minPixelSpacing, maxPixelSpacing, intersectionPixelSpacing):
+        #pbrt 797
+        minDist = minPixelSpacing * intersectionPixelSpacing
+        maxDist = maxPixelSpacing * intersectionPixelSpacing
+        contribExtend = np.clip(minHitDist, minDist, maxDist)
+        return contribExtend
 
+
+    def __init__(self, pos, normal, spectrum, maxDistance, avgLightDir):
+        #pbrt 793
         self.pos = pos
         self.normal = normal
         self.irradiance = spectrum
@@ -12,6 +21,7 @@ class Irradiance_Sample():
 
 class Irradiance_ProcessData():
     def __init__(self, pos, normal, minWeight, maxCosAngleDiff):
+        #pbrt 793
         self.pos = pos
         self.normal = normal
         self.minWeight = minWeight

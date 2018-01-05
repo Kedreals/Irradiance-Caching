@@ -13,3 +13,9 @@ class Intersection :
         self.color = np.array([1., 1., 1.])
         self.ell = 0.0
 
+    def computePixelSpacing(self):
+        #pbrt 790
+        # pixelSpacing = np.sqrt(np.norm(np.cross(dpdx, dpdy)))
+        pixelSpacing = 1
+        print("Not implemented")
+        return pixelSpacing

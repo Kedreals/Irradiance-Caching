@@ -10,6 +10,7 @@ class IrradianceIntegrator(Integrator):
 
         super().__init__()
 
+        #pbrt 787
         self.minPixelDist = minPixelDist
         self.maxPixelDist = maxPixelDist
         self.minWeight = minWeight
@@ -60,8 +61,8 @@ class IrradianceIntegrator(Integrator):
 
         return np.zeros(3)
 
-    def computeError(self, newPoint, sample):
-
+    def interpolate(self, newPoint, sample):
+        #pbrt 794
         perr = np.linalg.norm(newPoint.pos - sample.pos) / sample.maxDist
         nerr = np.sqrt((1.0 - np.dot(newPoint.normal, sample.normal)) / (1.0 - newPoint.maxCosAngleDiff))
 
@@ -74,4 +75,5 @@ class IrradianceIntegrator(Integrator):
             newPoint.sumWeight += weight
 
     def interpolationSuccessful(self, newPoint):
+        #pbrt 794
         return newPoint.sumWeight >= newPoint.minWeight
