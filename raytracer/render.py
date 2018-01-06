@@ -42,14 +42,14 @@ def render( res_x, res_y, scene, integrator) :
 
             r = cam.generateRay( ix, iy)
 
-            ellval = integrator.ell( scene, r)
+            ellval = integrator.ell( scene, r, cam)
             cam.image[ix,iy,:] = ellval
             
     return cam.image
     
 
 
-integrator = IrradianceIntegrator(1, 1, 1, 1) #BasicIntegrator()
+integrator = IrradianceIntegrator(1, 10, 0.1, np.pi/4.0) #BasicIntegrator()
 scene = createScene()
 
 im = render( 512, 512, scene, integrator)

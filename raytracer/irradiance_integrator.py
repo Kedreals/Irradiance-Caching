@@ -1,5 +1,5 @@
 from integrator import Integrator
-import irradiance_sample
+from irradiance_sample import *
 import numpy as np
 from intersection import Intersection
 from ray import Ray
@@ -15,6 +15,31 @@ class IrradianceIntegrator(Integrator):
         self.maxPixelDist = maxPixelDist
         self.minWeight = minWeight
         self.maxCosAngleDiff = maxCosAngleDiff
+        self.cache = []
+
+    def generateSample(self, intersection, scene, camera, ray):
+        sample = Irradiance_Sample(intersection.pos, intersection.n)
+        l = np.min([intersection.ell + self.MonteCarlo(intersection, scene, sample=sample), 1.])
+        pixelSpacing = self.computeIntersectionPixelSpacing(camera, ray, intersection)
+        sample.irradiance = l
+        sample.computeSampleMaxContribution(self.minPixelDist, self.maxPixelDist, pixelSpacing)
+        return sample
+
+    def fillCache(self, camera, scene):
+        pix_x = camera.image.shape[0]
+        pix_y = camera.image.shape[1]
+
+        print(pix_x)
+        print(pix_y)
+        print(self.maxPixelDist)
+
+        for i in range(0, pix_x, self.maxPixelDist):
+            for j in range(0, pix_y, self.maxPixelDist):
+                ray = camera.generateRay(i, j)
+                intersection = Intersection()
+                if (scene.intersect(ray, intersection)):
+                    s = self.generateSample(intersection, scene, camera, ray)
+                    self.cache.append(s)
 
     def getCosineWeightedPointR3(self, n):
         fn = np.array([0., 0., 1.])
@@ -39,34 +64,78 @@ class IrradianceIntegrator(Integrator):
 
         return r
 
-    def MonteCarlo(self, intersection, scene, sampleCount = 64):
+    def MonteCarlo(self, intersection, scene, sampleCount = 64, sample = None):
         res = 0.0
+        minHitDist = np.infty
 
         for i in range(sampleCount):
             d = self.getCosineWeightedPointR3(intersection.n)
             r = Ray(intersection.pos+0.001*d, d)
             ni = Intersection()
             if(scene.intersect(r, ni)):
+                if(r.t < minHitDist):
+                    minHitDist = r.t
                 res += ni.ell*np.pi
+                if((sample != None) & (ni.ell > 0)):
+                    sample.avgLightDir += d
 
         res *= 1/sampleCount
-
+        if(sample != None):
+            if(np.linalg.norm(sample.avgLightDir > 0)):
+                sample.avgLightDir = sample.avgLightDir / np.linalg.norm(sample.avgLightDir)
+            sample.minHitDist = minHitDist
         return np.min([res, 1.0])
 
-    def ell(self, scene, ray):
+    def ell(self, scene, ray, camera):
+        if(len(self.cache) == 0):
+            self.fillCache(camera, scene)
+
         intersection = Intersection()
         if (scene.intersect(ray, intersection)):
-            l = np.min([intersection.ell + self.MonteCarlo(intersection, scene), 1.])
-            return l * intersection.color
+
+            interpolatedPoint = Irradiance_ProcessData(intersection.pos, intersection.n, self.minWeight, self.maxCosAngleDiff)
+            for sample in self.cache:
+                self.interpolate(interpolatedPoint, sample)
+            if(self.interpolationSuccessful(interpolatedPoint)):
+                norm = np.linalg.norm(interpolatedPoint.avgLightDir)
+                if(norm > 0):
+                    interpolatedPoint.avgLightDir /= norm
+                return interpolatedPoint.irradiance/interpolatedPoint.sumWeight * intersection.color
+            else:
+                s = self.generateSample(intersection, scene, camera, ray)
+                self.cache.append(s)
+                return s.irradiance * np.array([1.0, 0.0, 0.0])
 
         return np.zeros(3)
+
+    def computeIntersectionPixelSpacing(self, camera, ray, intersection):
+        rayx = camera.generateRay(ray.pixel[0]+1, ray.pixel[1])
+        rayy = camera.generateRay(ray.pixel[0], ray.pixel[1]+1)
+
+        d = -np.dot(intersection.n, intersection.pos)
+        tx = -(np.dot(intersection.n, rayx.o) + d) / np.dot(intersection.n, rayx.d)
+        px = rayx.o + tx*rayx.d
+
+        ty = -(np.dot(intersection.n, rayy.o) + d) / np.dot(intersection.n, rayy.d)
+        py = rayy.o + ty*rayy.d
+
+        dpdx = px - intersection.pos
+        dpdy = py - intersection.pos
+
+        pixelspacing = np.sqrt(np.linalg.norm(np.cross(dpdx, dpdy)))
+        return pixelspacing
 
     def interpolate(self, newPoint, sample):
         #pbrt 794
         perr = np.linalg.norm(newPoint.pos - sample.pos) / sample.maxDist
-        nerr = np.sqrt((1.0 - np.dot(newPoint.normal, sample.normal)) / (1.0 - newPoint.maxCosAngleDiff))
+        val = np.max([0, (1.0 - np.dot(newPoint.normal, sample.normal)) / (1.0 - newPoint.maxCosAngleDiff)])
+        if(val < 0):
+            print(val)
+            print(np.dot(newPoint.normal, sample.normal))
+            print((1.0 - newPoint.maxCosAngleDiff))
+        nerr = np.sqrt(val)
 
-        err = np.max(perr, nerr)
+        err = np.max([perr, nerr])
 
         if(err < 1.0):
             weight = 1.0 - err

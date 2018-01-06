@@ -29,6 +29,6 @@ class Camera :
         dir = np.array([dx, dy, 1.0])
         dir = dir / np.linalg.norm( dir)
         
-        r = ray.Ray( self.pos, dir)
+        r = ray.Ray( self.pos, dir, np.array([pix_x, pix_y]))
         return r
     

@@ -12,7 +12,7 @@ import numpy as np
 
 class BasicIntegrator(Integrator) :
     
-    def ell(self, scene, ray):
+    def ell(self, scene, ray, camera):
         intersection = Intersection(np.array([0., 0., 0.]), np.array([0.,1.,0.]))
         if( scene.intersect(ray, intersection)) :
             ldir = np.array([-1.0, 0., -1.0])

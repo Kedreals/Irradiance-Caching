@@ -11,7 +11,7 @@ from abc import ABCMeta
 class Integrator :
     __metaclass__ = ABCMeta
         
-    def ell(self, scene, ray):
+    def ell(self, scene, ray, camera):
         raise NotImplementedError()
         
         
