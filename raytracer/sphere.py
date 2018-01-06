@@ -12,9 +12,9 @@ from shape import Shape
 
 class Sphere( Shape) :
     
-    def __init__(self, pos, r) :
+    def __init__(self, pos, r, ell=0, color=np.array([1., 1., 1.])):
     
-        super().__init__()
+        super().__init__(ell, color)
         
         self.pos = pos
         self.r = r
@@ -51,6 +51,7 @@ class Sphere( Shape) :
             intersection.n = +intersection.pos - self.pos
             intersection.n /= np.linalg.norm(intersection.n)
             intersection.ell = self.ell
+            intersection.color = self.color
             return True
 
         return False

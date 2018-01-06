@@ -11,8 +11,8 @@ from shape import Shape
 
 class Plane(Shape):
 
-    def __init__(self, pos, normal):
-        super().__init__()
+    def __init__(self, pos, normal, ell=0.0, color=np.array([1., 1., 1.])):
+        super().__init__(ell, color)
 
         self.pos = pos
         self.n = normal / np.linalg.norm(normal)
@@ -31,6 +31,7 @@ class Plane(Shape):
             intersection.pos = ray.o + ray.t * ray.d
             intersection.n = self.n
             intersection.ell = self.ell
+            intersection.color = self.color
             return True
 
         return False
@@ -38,8 +39,8 @@ class Plane(Shape):
 
 class Rectangle(Plane):
 
-    def __init__(self, pos, normal, bounds):
-        super().__init__(pos, normal)
+    def __init__(self, pos, normal, bounds, ell=0., color=np.arary([1., 1., 1.])):
+        super().__init__(pos, normal, ell, color)
 
         self.bounds = bounds
 
@@ -72,4 +73,5 @@ class Rectangle(Plane):
         intersection.pos = ray.o + ray.t * ray.d
         intersection.n = self.n
         intersection.ell = self.ell
+        intersection.color = self.color
         return True

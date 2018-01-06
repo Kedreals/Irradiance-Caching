@@ -22,10 +22,9 @@ def createScene() :
     
     scene = Scene()
     
-    plane = Rectangle(np.array([1., 0, 3.0]), np.array([-1., 0., 0.]), 0.75*np.array([1, 1]))
+    plane = Rectangle(np.array([1., 0, 3.0]), np.array([-1., 0., 0.]), 0.75*np.array([1, 1]), 1)
 
     sphere = Sphere( np.array([0.0, 0.0, 3.0]), 1.0)
-    plane.ell = 1.
 
     scene.objects.append( sphere)
     scene.objects.append(plane)
@@ -38,6 +37,7 @@ def render( res_x, res_y, scene, integrator) :
     cam = Camera( res_x, res_y)
     
     for ix in range( res_x) :
+        print(ix / res_x)
         for iy in range( res_y) :
 
             r = cam.generateRay( ix, iy)
