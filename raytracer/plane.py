@@ -39,7 +39,7 @@ class Plane(Shape):
 
 class Rectangle(Plane):
 
-    def __init__(self, pos, normal, bounds, ell=0., color=np.arary([1., 1., 1.])):
+    def __init__(self, pos, normal, bounds, ell=0., color=np.array([1., 1., 1.])):
         super().__init__(pos, normal, ell, color)
 
         self.bounds = bounds
