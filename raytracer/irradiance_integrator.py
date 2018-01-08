@@ -6,7 +6,7 @@ from ray import Ray
 
 class IrradianceIntegrator(Integrator):
 
-    def __init__(self, minPixelDist, maxPixelDist, minWeight, maxCosAngleDiff):
+    def __init__(self, minPixelDist, maxPixelDist, minWeight, maxCosAngleDiff, showSamplePoints = False):
 
         super().__init__()
 
@@ -16,6 +16,7 @@ class IrradianceIntegrator(Integrator):
         self.minWeight = minWeight
         self.maxCosAngleDiff = maxCosAngleDiff
         self.cache = []
+        self.showSamples = showSamplePoints
 
     def generateSample(self, intersection, scene, camera, ray):
         sample = Irradiance_Sample(intersection.pos, intersection.n)
@@ -23,6 +24,8 @@ class IrradianceIntegrator(Integrator):
         pixelSpacing = self.computeIntersectionPixelSpacing(camera, ray, intersection)
         sample.irradiance = l
         sample.computeSampleMaxContribution(self.minPixelDist, self.maxPixelDist, pixelSpacing)
+        if self.showSamples :
+            camera.image[ray.pixel[0], ray.pixel[1], :] = [1., 0., 0.]
         return sample
 
     def fillCache(self, camera, scene):
@@ -104,7 +107,7 @@ class IrradianceIntegrator(Integrator):
             else:
                 s = self.generateSample(intersection, scene, camera, ray)
                 self.cache.append(s)
-                return s.irradiance * np.array([1.0, 0.0, 0.0])
+                return s.irradiance * intersection.color
 
         return np.zeros(3)
 
