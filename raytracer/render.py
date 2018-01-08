@@ -69,8 +69,8 @@ def render( res_x, res_y, scene, integrator) :
     
 
 
-integrator = BasicIntegrator() #IrradianceIntegrator(1, 10, 0.1, np.pi/4.0, True)
-scene = createScene("Box")
+integrator = IrradianceIntegrator(1, 10, 0.1, np.pi/4.0, True)
+scene = createScene()
 
 start = time.perf_counter()
 im = render(512, 512, scene, integrator)
