@@ -103,11 +103,11 @@ class IrradianceIntegrator(Integrator):
                 norm = np.linalg.norm(interpolatedPoint.avgLightDir)
                 if(norm > 0):
                     interpolatedPoint.avgLightDir /= norm
-                return interpolatedPoint.irradiance/interpolatedPoint.sumWeight * intersection.color
+                return np.min([1.0, interpolatedPoint.irradiance/interpolatedPoint.sumWeight]) * intersection.color
             else:
                 s = self.generateSample(intersection, scene, camera, ray)
                 self.cache.append(s)
-                return s.irradiance * intersection.color
+                return np.min([1.0, s.irradiance]) * intersection.color
 
         return np.zeros(3)
 

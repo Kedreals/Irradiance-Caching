@@ -36,7 +36,7 @@ def createScene(name = "simple") :
         ceiling = Rectangle(np.array([-8,0, 5.]), np.array([ 1., 0., 0.]), np.array([8, 8]))
         back = Rectangle(np.array([0., 0., 13.]), np.array([ 0., 0.,-1.]), np.array([8, 8]))
         front = Rectangle(np.array([0, 0., -3.]), np.array([ 0., 0., 1.]), np.array([8, 8]))
-        squareLight = Rectangle(np.array([-7.5, 0, 5.]), np.array([1,0,0.]), np.array([0.5, 0.5]), 10)
+        squareLight = Rectangle(np.array([-7.5, 0, 5.]), np.array([1,0,0.]), np.array([4, 4]), 5)
         redBall = Sphere(np.array([0., 0., 5.]), 1, 0, np.array([1., 0., 0.]))
 
         scene.objects.append(leftWall)
@@ -51,26 +51,27 @@ def createScene(name = "simple") :
     return scene
 
 
-def render( res_x, res_y, scene, integrator) :
+def render(res_x, res_y, scene, integrator):
     
-    cam = Camera( res_x, res_y)
+    cam = Camera(res_x, res_y)
     
-    for ix in range( res_x) :
-        print(ix / res_x)
-        for iy in range( res_y) :
+    for ix in range(res_x):
+        d = int(10000*ix/res_x)/100
+        print("Finished Rendering", d, "% of the Pixels")
+        for iy in range(res_y):
 
-            r = cam.generateRay( ix, iy)
+            r = cam.generateRay(ix, iy)
 
             ellval = integrator.ell(scene, r, cam)
-            if (integrator.showSamples != True) | ((cam.image[ix, iy, :] != 0).sum() == 0):
+            if (integrator.showSamples is not True) | ((cam.image[ix, iy, :] != 0).sum() == 0):
                 cam.image[ix, iy, :] = ellval
             
     return cam.image
     
 
 
-integrator = IrradianceIntegrator(1, 10, 0.1, np.pi/4.0, True)
-scene = createScene()
+integrator = BasicIntegrator()#IrradianceIntegrator(1, 10, 0.1, np.pi/4.0, True)
+scene = createScene("box")
 
 start = time.perf_counter()
 im = render(512, 512, scene, integrator)

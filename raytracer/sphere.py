@@ -42,6 +42,7 @@ class Sphere( Shape) :
             sol = s2
         elif s2 < 0.0 : 
             sol = s1
+
         elif s2 < s1 :
             sol = s2
             
