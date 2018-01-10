@@ -145,11 +145,11 @@ class IrradianceIntegrator(Integrator):
             interpolatedPoint = Irradiance_ProcessData(intersection.pos, intersection.n, self.minWeight, self.maxCosAngleDiff)
             val = self.getInterpolatedValue(interpolatedPoint, 2)
             if ((val < 0) is False):
-                return intersection.BSDF(interpolatedPoint.avgLightDir, -ray.d, intersection.n)*val * intersection.color
+                return val * intersection.color*intersection.BSDF(interpolatedPoint.avgLightDir, -ray.d, intersection.n)
             else:
                 s = self.generateSample(intersection, scene, camera, ray)
                 self.cache.append(s)
-                return intersection.BSDF(s.avgLightDir, -ray.d, intersection.n)*s.irradiance * intersection.color
+                return s.irradiance * intersection.color *intersection.BSDF(s.avgLightDir, -ray.d, intersection.n)
 
         return np.zeros(3)
 

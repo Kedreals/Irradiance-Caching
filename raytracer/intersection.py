@@ -13,4 +13,4 @@ class Intersection :
         self.n = normal
         self.color = np.array([1., 1., 1.])
         self.ell = 0.0
-        self.BSDF = DiffuseBSDF
+        self.BSDF = constBSDF#DiffuseBSDF
