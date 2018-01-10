@@ -30,13 +30,13 @@ def createScene(name = "simple") :
         scene.objects.append( sphere)
         scene.objects.append(plane)
     elif name == "box":
-        leftWall = Rectangle(np.array([0., -8., 5.]), np.array([0., 1., 0.]), np.array([8, 8]))
-        rightWall = Rectangle(np.array([0., 8., 5.]), np.array([0., -1., 0]), np.array([8, 8]))
-        floor = Rectangle(np.array([8., 0., 5.]), np.array([-1., 0., 0.]), np.array([8, 8]))
-        ceiling = Rectangle(np.array([-8,0, 5.]), np.array([ 1., 0., 0.]), np.array([8, 8]))
-        back = Rectangle(np.array([0., 0., 13.]), np.array([ 0., 0.,-1.]), np.array([8, 8]))
-        front = Rectangle(np.array([0, 0., -3.]), np.array([ 0., 0., 1.]), np.array([8, 8]))
-        squareLight = Rectangle(np.array([-7.5, 0, 5.]), np.array([1,0,0.]), np.array([0.5, 0.5]), 10)
+        leftWall = Rectangle(np.array([0., -4., 5.]), np.array([0., 1., 0.]), np.array([4, 4]))
+        rightWall = Rectangle(np.array([0., 4., 5.]), np.array([0., -1., 0]), np.array([4, 4]))
+        floor = Rectangle(np.array([4., 0., 5.]), np.array([-1., 0., 0.]), np.array([4, 4]))
+        ceiling = Rectangle(np.array([-4,0, 5.]), np.array([ 1., 0., 0.]), np.array([4, 4]))
+        back = Rectangle(np.array([0., 0., 13.]), np.array([ 0., 0.,-1.]), np.array([4, 4]))
+        front = Rectangle(np.array([0, 0., -3.]), np.array([ 0., 0., 1.]), np.array([4, 4]))
+        squareLight = Rectangle(np.array([-3.5, 0, 5.]), np.array([1,0,0.]), np.array([2, 2]), 5)
         redBall = Sphere(np.array([0., 0., 5.]), 1, 0, np.array([1., 0., 0.]))
 
         scene.objects.append(leftWall)
@@ -70,7 +70,7 @@ def render( res_x, res_y, scene, integrator) :
 
 
 integrator = IrradianceIntegrator(1, 10, 0.1, np.pi/4.0, True)
-scene = createScene()
+scene = createScene("box")
 
 start = time.perf_counter()
 im = render(512, 512, scene, integrator)

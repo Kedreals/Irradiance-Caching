@@ -33,7 +33,7 @@ def getCosineWeightedPointR3(n):
 
     return r
 
-def MonteCarlo(intersection, scene, sampleCount=64, sample=None):
+def MonteCarlo(intersection, scene, sampleCount=128, sample=None):
     res = 0.0
     minHitDist = np.infty
 

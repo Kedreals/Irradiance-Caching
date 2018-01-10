@@ -4,21 +4,7 @@ import numpy as np
 from intersection import Intersection
 from ray import Ray
 
-class IrradianceIntegrator(Integrator):
-
-    def __init__(self, minPixelDist, maxPixelDist, minWeight, maxCosAngleDiff, showSamplePoints = False):
-
-        super().__init__()
-
-        #pbrt 787
-        self.minPixelDist = minPixelDist
-        self.maxPixelDist = maxPixelDist
-        self.minWeight = minWeight
-        self.maxCosAngleDiff = maxCosAngleDiff
-        self.cache = []
-        self.showSamples = showSamplePoints
-
-    def generateSample(self, intersection, scene, camera, ray):
+"""    def generateSample(self, intersection, scene, camera, ray, depth = 0):
         sample = Irradiance_Sample(intersection.pos, intersection.n)
         l = np.min([intersection.ell + self.MonteCarlo(intersection, scene, sample=sample), 1.])
         pixelSpacing = self.computeIntersectionPixelSpacing(camera, ray, intersection)
@@ -27,6 +13,64 @@ class IrradianceIntegrator(Integrator):
         if self.showSamples :
             camera.image[ray.pixel[0], ray.pixel[1], :] = [1., 0., 0.]
         return sample
+"""
+
+class IrradianceIntegrator(Integrator):
+
+    def __init__(self, minPixelDist, maxPixelDist, minWeight, maxCosAngleDiff, showSamplePoints = False, maxBounceDepth = 2):
+
+        super().__init__()
+
+        #pbrt 787
+        self.minPixelDist = minPixelDist
+        self.maxPixelDist = maxPixelDist
+        self.minWeight = minWeight
+        self.maxCosAngleDiff = maxCosAngleDiff
+        #cache[0] are direct light samples, cache[1] are indirect light samples with one bounce
+        #cache[2] are indirect light samples with two bounces
+        self.showSamples = showSamplePoints
+        self.maxBounceDepth = maxBounceDepth
+        self.cache = []
+        [self.cache.append([]) for i in range(maxBounceDepth+1)]
+
+
+    def generateSample(self, intersection, scene, camera, ray, depth = 0):
+        sample = Irradiance_Sample(intersection.pos, intersection.n)
+        minSamples = 128
+        l = 0
+
+        #generate a sample for irradiance
+        if(depth > 0):
+            numSample = minSamples # * depth
+            for i in range(numSample):
+                d = self.getCosineWeightedPointR3(intersection.n)
+                r = Ray(intersection.pos + 0.001 * d, d)
+                ni = Intersection()
+                if (scene.intersect(r, ni)):
+                    procData = Irradiance_ProcessData(ni.pos, ni.n, self.minWeight, self.maxCosAngleDiff)
+                    intVal = self.getInterpolatedValue(procData, depth-1)
+                    # if interpolation is successful
+                    if(intVal >= 0):
+                        l += intVal * ni.BSDF(procData.avgLightDir, d) * np.pi
+                    # else make a new sample und use this irradiance
+                    else:
+                        s = self.generateSample(ni, scene, camera, r, depth-1)
+                        l += s.irradiance * ni.BSDF(s.avgLightDir, d) * np.pi
+
+            l /= numSample
+        else:
+            # generate a sample for
+            l = np.min([intersection.ell + self.MonteCarlo(intersection, scene, minSamples, sample), 1.])
+
+        pixelSpacing = self.computeIntersectionPixelSpacing(camera, ray, intersection)
+        sample.irradiance = l
+        sample.computeSampleMaxContribution(self.minPixelDist, self.maxPixelDist, pixelSpacing)
+        if ((self.showSamples) & (depth == self.maxBounceDepth)):
+            camera.image[ray.pixel[0], ray.pixel[1], :] = [1., 0., 0.]
+
+        self.cache[depth].append(sample)
+        return sample
+
 
     def fillCache(self, camera, scene):
         pix_x = camera.image.shape[0]
@@ -41,8 +85,7 @@ class IrradianceIntegrator(Integrator):
                 ray = camera.generateRay(i, j)
                 intersection = Intersection()
                 if (scene.intersect(ray, intersection)):
-                    s = self.generateSample(intersection, scene, camera, ray)
-                    self.cache.append(s)
+                    s = self.generateSample(intersection, scene, camera, ray, self.maxBounceDepth)
 
     def getCosineWeightedPointR3(self, n):
         fn = np.array([0., 0., 1.])
@@ -90,26 +133,36 @@ class IrradianceIntegrator(Integrator):
         return np.min([res, 1.0])
 
     def ell(self, scene, ray, camera):
-        if(len(self.cache) == 0):
+        if(len(self.cache[0]) == 0):
             self.fillCache(camera, scene)
+            for i in range(len(self.cache)):
+                ze = sum(s.irradiance == 0 for s in self.cache[i])
+                print("In cache depth: ", i, " have ", ze, " of ", len(self.cache[i]), "elements 0 (ir)radiance")
 
         intersection = Intersection()
         if (scene.intersect(ray, intersection)):
 
             interpolatedPoint = Irradiance_ProcessData(intersection.pos, intersection.n, self.minWeight, self.maxCosAngleDiff)
-            for sample in self.cache:
-                self.interpolate(interpolatedPoint, sample)
-            if(self.interpolationSuccessful(interpolatedPoint)):
-                norm = np.linalg.norm(interpolatedPoint.avgLightDir)
-                if(norm > 0):
-                    interpolatedPoint.avgLightDir /= norm
-                return interpolatedPoint.irradiance/interpolatedPoint.sumWeight * intersection.color
+            val = self.getInterpolatedValue(interpolatedPoint, 2)
+            if ((val < 0) is False):
+                return val * intersection.color
             else:
                 s = self.generateSample(intersection, scene, camera, ray)
                 self.cache.append(s)
                 return s.irradiance * intersection.color
 
         return np.zeros(3)
+
+    def getInterpolatedValue(self, interpolationPoint, depth):
+        for sample in self.cache[depth]:
+            self.interpolate(interpolationPoint, sample)
+        if (self.interpolationSuccessful(interpolationPoint)):
+            norm = np.linalg.norm(interpolationPoint.avgLightDir)
+            if (norm > 0):
+                interpolationPoint.avgLightDir /= norm
+            return interpolationPoint.irradiance / interpolationPoint.sumWeight
+        else:
+            return -1
 
     def computeIntersectionPixelSpacing(self, camera, ray, intersection):
         rayx = camera.generateRay(ray.pixel[0]+1, ray.pixel[1])
