@@ -36,7 +36,7 @@ class IrradianceIntegrator(Integrator):
 
     def generateSample(self, intersection, scene, camera, ray, depth = 0):
         sample = Irradiance_Sample(intersection.pos, intersection.n)
-        minSamples = 128
+        minSamples = 64
         l = 0
 
         #generate a sample for irradiance
@@ -47,6 +47,8 @@ class IrradianceIntegrator(Integrator):
                 r = Ray(intersection.pos + 0.001 * d, d)
                 ni = Intersection()
                 if (scene.intersect(r, ni)):
+                    if(sample.minHitDist > r.t):
+                        sample.minHitDist = r.t
                     procData = Irradiance_ProcessData(ni.pos, ni.n, self.minWeight, self.maxCosAngleDiff)
                     intVal = self.getInterpolatedValue(procData, depth-1)
                     # if interpolation is successful
@@ -82,6 +84,7 @@ class IrradianceIntegrator(Integrator):
 
         for i in range(0, pix_x, self.maxPixelDist):
             for j in range(0, pix_y, self.maxPixelDist):
+                print(i, " ", j)
                 ray = camera.generateRay(i, j)
                 intersection = Intersection()
                 if (scene.intersect(ray, intersection)):
