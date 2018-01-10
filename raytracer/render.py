@@ -30,13 +30,13 @@ def createScene(name = "simple") :
         scene.objects.append( sphere)
         scene.objects.append(plane)
     elif name == "box":
-        leftWall = Rectangle(np.array([0., -4., 5.]), np.array([0., 1., 0.]), np.array([4, 4]))
-        rightWall = Rectangle(np.array([0., 4., 5.]), np.array([0., -1., 0]), np.array([4, 4]))
-        floor = Rectangle(np.array([4., 0., 5.]), np.array([-1., 0., 0.]), np.array([4, 4]))
-        ceiling = Rectangle(np.array([-4,0, 5.]), np.array([ 1., 0., 0.]), np.array([4, 4]))
+        leftWall = Rectangle(np.array([0., -4., 5.]), np.array([0., -1., 0.]), np.array([8, 4]))
+        rightWall = Rectangle(np.array([0., 4., 5.]), np.array([0., 1., 0]), np.array([8, 4]))
+        floor = Rectangle(np.array([4., 0., 5.]), np.array([-1., 0., 0.]), np.array([8, 4]))
+        ceiling = Rectangle(np.array([-4,0, 5.]), np.array([ 1., 0., 0.]), np.array([8, 4]))
         back = Rectangle(np.array([0., 0., 13.]), np.array([ 0., 0.,-1.]), np.array([4, 4]))
         front = Rectangle(np.array([0, 0., -3.]), np.array([ 0., 0., 1.]), np.array([4, 4]))
-        squareLight = Rectangle(np.array([-3.5, 0, 5.]), np.array([1,0,0.]), np.array([2, 2]), 5)
+        squareLight = Rectangle(np.array([-3.99, 0, 5.]), np.array([1,0,0.]), np.array([4, 2]), 5)
         redBall = Sphere(np.array([0., 0., 5.]), 1, 0, np.array([1., 0., 0.]))
 
         scene.objects.append(leftWall)
@@ -51,25 +51,26 @@ def createScene(name = "simple") :
     return scene
 
 
-def render( res_x, res_y, scene, integrator) :
+def render(res_x, res_y, scene, integrator):
     
-    cam = Camera( res_x, res_y)
+    cam = Camera(res_x, res_y)
     
-    for ix in range( res_x) :
-        print(ix / res_x)
-        for iy in range( res_y) :
+    for ix in range(res_x):
+        d = int(10000*ix/res_x)/100
+        print("Finished Rendering", d, "% of the Pixels")
+        for iy in range(res_y):
 
-            r = cam.generateRay( ix, iy)
+            r = cam.generateRay(ix, iy)
 
             ellval = integrator.ell(scene, r, cam)
-            if (integrator.showSamples != True) | ((cam.image[ix, iy, :] != 0).sum() == 0):
+            if (integrator.showSamples is not True) | ((cam.image[ix, iy, :] != 0).sum() == 0):
                 cam.image[ix, iy, :] = ellval
             
     return cam.image
     
 
 
-integrator = IrradianceIntegrator(1, 10, 0.1, np.pi/4.0, True)
+integrator = IrradianceIntegrator(1, 40, 0.1, np.pi/4.0, True)
 scene = createScene("box")
 
 start = time.perf_counter()

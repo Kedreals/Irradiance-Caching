@@ -51,11 +51,11 @@ class IrradianceIntegrator(Integrator):
                     intVal = self.getInterpolatedValue(procData, depth-1)
                     # if interpolation is successful
                     if(intVal >= 0):
-                        l += intVal * ni.BSDF(procData.avgLightDir, d) * np.pi
+                        l += intVal * ni.BSDF(procData.avgLightDir, d, intersection.n) * np.pi
                     # else make a new sample und use this irradiance
                     else:
                         s = self.generateSample(ni, scene, camera, r, depth-1)
-                        l += s.irradiance * ni.BSDF(s.avgLightDir, d) * np.pi
+                        l += s.irradiance * ni.BSDF(s.avgLightDir, d, intersection.n) * np.pi
 
             l /= numSample
         else:
@@ -145,11 +145,11 @@ class IrradianceIntegrator(Integrator):
             interpolatedPoint = Irradiance_ProcessData(intersection.pos, intersection.n, self.minWeight, self.maxCosAngleDiff)
             val = self.getInterpolatedValue(interpolatedPoint, 2)
             if ((val < 0) is False):
-                return val * intersection.color
+                return intersection.BSDF(interpolatedPoint.avgLightDir, -ray.d, intersection.n)*val * intersection.color
             else:
                 s = self.generateSample(intersection, scene, camera, ray)
                 self.cache.append(s)
-                return s.irradiance * intersection.color
+                return intersection.BSDF(s.avgLightDir, -ray.d, intersection.n)*s.irradiance * intersection.color
 
         return np.zeros(3)
 
