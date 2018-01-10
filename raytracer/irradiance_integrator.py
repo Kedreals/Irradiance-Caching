@@ -81,7 +81,7 @@ class IrradianceIntegrator(Integrator):
         print(self.maxPixelDist)
 
         for i in range(0, pix_x, self.maxPixelDist):
-            print("Filling Chach :", int(10000*(i/self.maxPixelDist)/(int(pix_x/self.maxPixelDist)+1))/100, "%")
+            print("Filling Cache :", int(10000*(i/self.maxPixelDist)/(int(pix_x/self.maxPixelDist)+1))/100, "%")
             for j in range(0, pix_y, self.maxPixelDist):
                 ray = camera.generateRay(i, j)
                 intersection = Intersection()
