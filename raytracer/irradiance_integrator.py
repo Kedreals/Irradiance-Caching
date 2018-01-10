@@ -83,6 +83,7 @@ class IrradianceIntegrator(Integrator):
         print(self.maxPixelDist)
 
         for i in range(0, pix_x, self.maxPixelDist):
+            print("Filling Cache :", int(10000*(i/self.maxPixelDist)/(int(pix_x/self.maxPixelDist)+1))/100, "%")
             for j in range(0, pix_y, self.maxPixelDist):
                 print(i, " ", j)
                 ray = camera.generateRay(i, j)
