@@ -53,11 +53,15 @@ class IrradianceIntegrator(Integrator):
                     intVal = self.getInterpolatedValue(procData, depth-1)
                     # if interpolation is successful
                     if(intVal >= 0):
-                        l += intVal * ni.BSDF(procData.avgLightDir, d, intersection.n) * np.pi
+                        lightval = intVal * ni.BSDF(procData.avgLightDir, d, intersection.n)
+                        l += lightval * np.pi
+                        sample.avgLightDir += d * lightval
                     # else make a new sample und use this irradiance
                     else:
                         s = self.generateSample(ni, scene, camera, r, depth-1)
-                        l += s.irradiance * ni.BSDF(s.avgLightDir, d, intersection.n) * np.pi
+                        lightval = s.irradiance * ni.BSDF(s.avgLightDir, d, intersection.n)
+                        l += lightval * np.pi
+                        sample.avgLightDir += s.avgLightDir * lightval
 
             l /= numSample
         else:
@@ -67,6 +71,10 @@ class IrradianceIntegrator(Integrator):
         pixelSpacing = self.computeIntersectionPixelSpacing(camera, ray, intersection)
         sample.irradiance = l
         sample.computeSampleMaxContribution(self.minPixelDist, self.maxPixelDist, pixelSpacing)
+        norm = np.norm(sample.avgLightDir)
+        if(norm > 0):
+            sample.avgLightDir /= norm
+
         if ((self.showSamples) & (depth == self.maxBounceDepth)):
             camera.image[ray.pixel[0], ray.pixel[1], :] = [1., 0., 0.]
 
@@ -127,7 +135,7 @@ class IrradianceIntegrator(Integrator):
                     minHitDist = r.t
                 res += ni.ell*np.pi
                 if((sample != None) & (ni.ell > 0)):
-                    sample.avgLightDir += d
+                    sample.avgLightDir += d * ni.ell
 
         res *= 1/sampleCount
         if(sample != None):
