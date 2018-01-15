@@ -62,7 +62,7 @@ class Octree:
             return self.addNode(newCenter, size, [objData])
 
             # else: are we not at our position, but not at a leaf node either
-            elif root.position != objData.position and root.isLeafNode == False:
+        elif root.position != objData.position and root.isLeafNode == False:
 
             # we're in an octNode still, we need to traverse further
             branch = self.findBranch(root, objData.position)

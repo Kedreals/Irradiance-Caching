@@ -66,12 +66,12 @@ class IrradianceIntegrator(Integrator):
             l /= numSample
         else:
             # generate a sample for
-            l = np.min([intersection.ell + self.MonteCarlo(intersection, scene, minSamples, sample), 1.])
+            l = intersection.ell + self.MonteCarlo(intersection, scene, minSamples, sample)
 
         pixelSpacing = self.computeIntersectionPixelSpacing(camera, ray, intersection)
         sample.irradiance = l
         sample.computeSampleMaxContribution(self.minPixelDist, self.maxPixelDist, pixelSpacing)
-        norm = np.norm(sample.avgLightDir)
+        norm = np.linalg.norm(sample.avgLightDir)
         if(norm > 0):
             sample.avgLightDir /= norm
 
@@ -142,7 +142,8 @@ class IrradianceIntegrator(Integrator):
             if(np.linalg.norm(sample.avgLightDir > 0)):
                 sample.avgLightDir = sample.avgLightDir / np.linalg.norm(sample.avgLightDir)
             sample.minHitDist = minHitDist
-        return np.min([res, 1.0])
+        sample.irradiace = res
+        return res
 
     def ell(self, scene, ray, camera):
         if(len(self.cache[0]) == 0):
@@ -154,16 +155,21 @@ class IrradianceIntegrator(Integrator):
         intersection = Intersection()
         if (scene.intersect(ray, intersection)):
 
-            interpolatedPoint = Irradiance_ProcessData(intersection.pos, intersection.n, self.minWeight, self.maxCosAngleDiff)
-            val = self.getInterpolatedValue(interpolatedPoint, 2)
-            if ((val < 0) is False):
-                return val * intersection.color*intersection.BSDF(interpolatedPoint.avgLightDir, -ray.d, intersection.n)
-            else:
-                s = self.generateSample(intersection, scene, camera, ray)
-                self.cache.append(s)
-                return s.irradiance * intersection.color *intersection.BSDF(s.avgLightDir, -ray.d, intersection.n)
-
-        return np.zeros(3)
+            val = 0
+            for i in range(self.maxBounceDepth, 1, -1):
+                interpolatedPoint = Irradiance_ProcessData(intersection.pos, intersection.n, self.minWeight,
+                                                           self.maxCosAngleDiff)
+                interpval = self.getInterpolatedValue(interpolatedPoint, i)
+                if ((interpval < 0) is False):
+                     val+= interpval *intersection.BSDF(interpolatedPoint.avgLightDir, -ray.d, intersection.n)
+                else:
+                    s = self.generateSample(intersection, scene, camera, ray, i)
+                    self.cache[i].append(s)
+                    val += s.irradiance * intersection.BSDF(s.avgLightDir, -ray.d, intersection.n)
+            sample = Irradiance_Sample(intersection.pos, intersection.n)
+            montecarloval = self.MonteCarlo(intersection, scene, sample=sample)
+            val += sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n)
+        return (val + intersection.ell) * intersection.color
 
     def getInterpolatedValue(self, interpolationPoint, depth):
         for sample in self.cache[depth]:

@@ -77,6 +77,8 @@ start = time.perf_counter()
 im = render(512, 512, scene, integrator)
 end = time.perf_counter()
 
+im * (1/im.max())
+
 seconds = end-start
 minutes = int(seconds/60)
 seconds = seconds % 60
