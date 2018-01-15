@@ -33,7 +33,7 @@ def getCosineWeightedPointR3(n):
 
     return r
 
-def MonteCarlo(intersection, scene, sampleCount=64, sample=None):
+def MonteCarlo(intersection, scene, sampleCount=128, sample=None):
     res = 0.0
     minHitDist = np.infty
 
@@ -63,7 +63,7 @@ class BasicIntegrator(Integrator) :
         intersection = Intersection(np.array([0., 0., 0.]), np.array([0.,1.,0.]))
         intersection.color = np.array([1., 1., 1.])
         if( scene.intersect(ray, intersection)) :
-            return np.max([0.0, intersection.ell + MonteCarlo(intersection, scene, 256)])*intersection.color
+            return np.max([0.0, np.min([1.0, intersection.ell + MonteCarlo(intersection, scene, 256)])])*intersection.color
         
         return np.array([0., 0., 0.])
         
