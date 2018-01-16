@@ -181,7 +181,7 @@ class IrradianceIntegrator(Integrator):
         if (scene.intersect(ray, intersection)):
 
             val = 0.0
-            for i in range(self.maxBounceDepth, 1, -1):
+            for i in range(self.maxBounceDepth, 0, -1):
                 interpolatedPoint = Irradiance_ProcessData(intersection.pos, intersection.n, self.minWeight,
                                                            self.maxCosAngleDiff)
                 interpval = self.getInterpolatedValue(interpolatedPoint, i)
@@ -194,9 +194,9 @@ class IrradianceIntegrator(Integrator):
             sample = Irradiance_Sample(intersection.pos, intersection.n)
             self.MonteCarlo(intersection, scene, sample=sample)
 
-            val = val + sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n)
+            #val = val + sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n)
 
-        return np.min([1, (val + intersection.ell)]) * intersection.color
+        return val * intersection.color #np.min([1, (val + intersection.ell)]) * intersection.color
 
     def getInterpolatedValue(self, interpolationPoint, depth):
         for sample in self.cache[depth]:
