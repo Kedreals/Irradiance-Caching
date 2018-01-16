@@ -3,6 +3,8 @@ from irradiance_sample import *
 import numpy as np
 from intersection import Intersection
 from ray import Ray
+from multiprocessing import Pool
+import time
 
 """    def generateSample(self, intersection, scene, camera, ray, depth = 0):
         sample = Irradiance_Sample(intersection.pos, intersection.n)
@@ -32,6 +34,7 @@ class IrradianceIntegrator(Integrator):
         self.maxBounceDepth = maxBounceDepth
         self.cache = []
         [self.cache.append([]) for i in range(maxBounceDepth+1)]
+        self.parallel = False
 
 
     def generateSample(self, intersection, scene, camera, ray, depth = 0):
@@ -81,6 +84,11 @@ class IrradianceIntegrator(Integrator):
         self.cache[depth].append(sample)
         return sample
 
+    def fillCachParallelHelp(self, XYSC):
+        ray = XYSC[3].generateRay(XYSC[0], XYSC[1])
+        intersection = Intersection()
+        if XYSC[2].intersect(ray, intersection):
+            self.generateSample(intersection, XYSC[2], XYSC[3], ray, self.maxBounceDepth)
 
     def fillCache(self, camera, scene):
         pix_x = camera.image.shape[0]
@@ -90,14 +98,19 @@ class IrradianceIntegrator(Integrator):
         print(pix_y)
         print(self.maxPixelDist)
 
-        for i in range(0, pix_x, self.maxPixelDist):
-            print("Filling Cache :", int(10000*(i/self.maxPixelDist)/(int(pix_x/self.maxPixelDist)+1))/100, "%")
-            for j in range(0, pix_y, self.maxPixelDist):
-                print(i, " ", j)
-                ray = camera.generateRay(i, j)
-                intersection = Intersection()
-                if (scene.intersect(ray, intersection)):
-                    s = self.generateSample(intersection, scene, camera, ray, self.maxBounceDepth)
+        if(self.parallel):
+            p = Pool(8)
+            A = [(x, y, scene, camera) for x in range(0, pix_x, self.maxPixelDist) for y in range(0, pix_y, self.maxPixelDist)]
+            p.map(self.fillCachParallelHelp, A)
+        else:
+            for i in range(0, pix_x, self.maxPixelDist):
+                print("Filling Cache :", int(10000*(i/self.maxPixelDist)/(int(pix_x/self.maxPixelDist)+1))/100, "%")
+                for j in range(0, pix_y, self.maxPixelDist):
+                    print(i, " ", j)
+                    ray = camera.generateRay(i, j)
+                    intersection = Intersection()
+                    if (scene.intersect(ray, intersection)):
+                        s = self.generateSample(intersection, scene, camera, ray, self.maxBounceDepth)
 
     def getCosineWeightedPointR3(self, n):
         fn = np.array([0., 0., 1.])
@@ -147,7 +160,15 @@ class IrradianceIntegrator(Integrator):
 
     def ell(self, scene, ray, camera):
         if(len(self.cache[0]) == 0):
+            start = time.perf_counter()
             self.fillCache(camera, scene)
+            end = time.perf_counter()
+            s = end-start
+            m = int(s/60)
+            s = s % 60
+            h = int(m/60)
+            m = m%60
+            print("filling cache took:", h,"h ", m, "min ", s, "s")
             for i in range(len(self.cache)):
                 ze = sum(s.irradiance == 0 for s in self.cache[i])
                 print("In cache depth: ", i, " have ", ze, " of ", len(self.cache[i]), "elements 0 (ir)radiance")
@@ -167,7 +188,7 @@ class IrradianceIntegrator(Integrator):
                     self.cache[i].append(s)
                     val += s.irradiance * intersection.BSDF(s.avgLightDir, -ray.d, intersection.n)
             sample = Irradiance_Sample(intersection.pos, intersection.n)
-            montecarloval = self.MonteCarlo(intersection, scene, sample=sample)
+            self.MonteCarlo(intersection, scene, sample=sample)
             val += sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n)
         return (val + intersection.ell) * intersection.color
 
