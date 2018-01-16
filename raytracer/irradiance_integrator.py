@@ -116,8 +116,6 @@ class IrradianceIntegrator(Integrator):
                         s = self.generateSample(intersection, scene, camera, ray, self.maxBounceDepth)
 
     def getCosineWeightedPointR3(self, n):
-        fn = np.array([0., 0., 1.])
-
         o = np.zeros(2)
         o[0] = np.arccos(n[2])
         o[1] = np.arctan2(n[1], n[0])
@@ -127,7 +125,7 @@ class IrradianceIntegrator(Integrator):
         omega[1] *= np.pi * 2
 
         RotTheta = np.array([[np.cos(o[0]), 0., np.sin(o[0])], [0., 1., 0.], [-np.sin(o[0]), 0., np.cos(o[0])]])
-        RotPhi = np.array([[np.cos(o[1]), np.sin(o[1]), 0.], [-np.sin(o[1]), np.cos(o[1]), 0.], [0., 0., 1.]])
+        RotPhi = np.array([[np.cos(o[1]), -np.sin(o[1]), 0.], [np.sin(o[1]), np.cos(o[1]), 0.], [0., 0., 1.]])
 
         r = np.zeros(3)
         r[0] = np.sin(omega[0]) * np.cos(omega[1])
@@ -135,6 +133,9 @@ class IrradianceIntegrator(Integrator):
         r[2] = np.cos(omega[0])
 
         r = np.dot(RotPhi, np.dot(RotTheta, r))
+
+        if np.dot(n, r) < 0:
+            print("d=", r, ", n=", n)
 
         return r
 
@@ -144,7 +145,7 @@ class IrradianceIntegrator(Integrator):
 
         for i in range(sampleCount):
             d = self.getCosineWeightedPointR3(intersection.n)
-            r = Ray(intersection.pos + 0.001 * d, d)
+            r = Ray(intersection.pos + 0.001 * intersection.n, d)
             ni = Intersection()
             if (scene.intersect(r, ni)):
                 if (r.t < minHitDist):
@@ -159,6 +160,7 @@ class IrradianceIntegrator(Integrator):
                 sample.avgLightDir = sample.avgLightDir / np.linalg.norm(sample.avgLightDir)
             sample.minHitDist = minHitDist
         sample.irradiance = res
+
         return res
 
     def ell(self, scene, ray, camera):

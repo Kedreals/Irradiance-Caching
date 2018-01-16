@@ -31,8 +31,8 @@ def createScene(name="simple"):
         scene.objects.append(sphere)
         scene.objects.append(plane)
     elif name == "box":
-        leftWall = Rectangle(np.array([0., -4., 5.]), np.array([0., -1., 0.]), np.array([8, 4]))
-        rightWall = Rectangle(np.array([0., 4., 5.]), np.array([0., 1., 0]), np.array([8, 4]))
+        leftWall = Rectangle(np.array([0., -4., 5.]), np.array([0., 1., 0.]), np.array([8, 4]))
+        rightWall = Rectangle(np.array([0., 4., 5.]), np.array([0., -1., 0]), np.array([8, 4]))
         floor = Rectangle(np.array([4., 0., 5.]), np.array([-1., 0., 0.]), np.array([8, 4]))
         ceiling = Rectangle(np.array([-4, 0, 5.]), np.array([1., 0., 0.]), np.array([8, 4]))
         back = Rectangle(np.array([0., 0., 13.]), np.array([0., 0., -1.]), np.array([4, 4]))
@@ -117,7 +117,7 @@ start = time.perf_counter()
 im = render(256, 256, scene, integrator)
 end = time.perf_counter()
 
-im = im * (1 / im.max())
+#im = im * (1 / im.max())
 
 seconds = end - start
 minutes = int(seconds / 60)
