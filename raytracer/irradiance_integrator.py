@@ -71,7 +71,7 @@ class IrradianceIntegrator(Integrator):
             l /= numSample
         else:
             # generate a sample for direct light
-            l = self.MonteCarlo(intersection, scene, minSamples, sample) #+ intersection.ell
+            l = self.MonteCarlo(intersection, scene, minSamples, sample) + intersection.ell
 
         pixelSpacing = self.computeIntersectionPixelSpacing(camera, ray, intersection)
         sample.irradiance = l
@@ -116,7 +116,7 @@ class IrradianceIntegrator(Integrator):
                     if (scene.intersect(ray, intersection)):
                         s = self.generateSample(intersection, scene, camera, ray, self.maxBounceDepth)
 
-
+    # cosine weighted monte carlo integration over the hemisphere at the intersection
     def MonteCarlo(self, intersection, scene, sampleCount=64, sample=None):
         res = 0.0
         minHitDist = np.infty
@@ -129,19 +129,25 @@ class IrradianceIntegrator(Integrator):
                 if (r.t < minHitDist):
                     minHitDist = r.t
                 res += ni.ell * np.pi
+
+                #if a sample is given, add the current hemisphere ray to average light direction
+                #weight it by how much impact it has on the resulting radiance
                 if ((sample != None) & (ni.ell > 0)):
                     sample.avgLightDir += d * ni.ell
 
         res *= 1 / sampleCount
         if (sample != None):
+            #normalize average light direction
             if (np.linalg.norm(sample.avgLightDir > 0)):
                 sample.avgLightDir = sample.avgLightDir / np.linalg.norm(sample.avgLightDir)
+            #min Hit distance is the closest intersection found while shooting rays in the hemisphere
             sample.minHitDist = minHitDist
-        sample.irradiance = res
+            sample.irradiance = res
 
         return res
 
     def ell(self, scene, ray, camera):
+        #very first call for ell() means the cache has to be filled
         if ((ray.pixel[0] == 0) & (ray.pixel[1] == 0)):
             start = time.perf_counter()
             self.fillCache(camera, scene)
@@ -160,43 +166,55 @@ class IrradianceIntegrator(Integrator):
 
         intersection = Intersection()
         if (scene.intersect(ray, intersection)):
-
             val = 0.0
+            #interpolate indirect light
             for i in range(self.maxBounceDepth, 0, -1):
                 interpolatedPoint = Irradiance_ProcessData(intersection.pos, intersection.n, self.minWeight,
                                                            self.maxCosAngleDiff)
                 interpval = self.getInterpolatedValue(interpolatedPoint, i)
                 if (interpval >= 0):
                     val += interpval * intersection.BSDF(interpolatedPoint.avgLightDir, -ray.d, intersection.n)
+
+                #if interpolation failed, compute new sample
                 else:
                     print("new sample generated at ", ray.pixel)
                     s = self.generateSample(intersection, scene, camera, ray, i)
                     val += s.irradiance * intersection.BSDF(s.avgLightDir, -ray.d, intersection.n)
+
+            #compute direct light
             sample = Irradiance_Sample(intersection.pos, intersection.n)
             self.MonteCarlo(intersection, scene, sample=sample)
 
             #print(val)
-            val = val + sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n)
+            #val = val + sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n)
             if(val < 0):
                 print(val)
 
         return val * intersection.color #np.min([1, (val + intersection.ell)]) * intersection.color
 
+
     def getInterpolatedValue(self, interpolationPoint, depth):
+        #interpolate all samples, that might be useful here
         for sample in self.cache[depth].find(interpolationPoint.pos):
             self.interpolate(interpolationPoint, sample)
+        #if interpolated value error is below threshold, return value
         if (self.interpolationSuccessful(interpolationPoint)):
             norm = np.linalg.norm(interpolationPoint.avgLightDir)
             if (norm > 0):
                 interpolationPoint.avgLightDir /= norm
             return interpolationPoint.irradiance / interpolationPoint.sumWeight
+        #else return a sign, that this is not a useful interpolation
         else:
             return -1
 
+    #magic formula from pbrt book
     def computeIntersectionPixelSpacing(self, camera, ray, intersection):
+        #2 rays one pixel in y and one in x direction from current ray
         rayx = camera.generateRay(ray.pixel[0] + 1, ray.pixel[1])
         rayy = camera.generateRay(ray.pixel[0], ray.pixel[1] + 1)
 
+        #compute how much space in the world the current pixel overlaps
+        #using differential geometry
         d = -np.dot(intersection.n, intersection.pos)
         tx = -(np.dot(intersection.n, rayx.o) + d) / np.dot(intersection.n, rayx.d)
         px = rayx.o + tx * rayx.d
@@ -210,6 +228,7 @@ class IrradianceIntegrator(Integrator):
         pixelspacing = np.sqrt(np.linalg.norm(np.cross(dpdx, dpdy)))
         return pixelspacing
 
+    #interpolate with error calulation used in pbrt book
     def interpolate(self, newPoint, sample):
         # pbrt 794
         perr = np.linalg.norm(newPoint.pos - sample.pos) / sample.maxDist
