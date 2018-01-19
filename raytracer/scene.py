@@ -10,6 +10,7 @@ class Scene :
     
     def __init__(self) :
         self.objects = []
+
         
     def intersect( self, ray, intersection) :
         
