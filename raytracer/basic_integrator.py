@@ -23,7 +23,7 @@ def getCosineWeightedPointR3(n):
     omega[1] *= np.pi * 2
 
     RotTheta = np.array([[np.cos(o[0]), 0., np.sin(o[0])], [0., 1., 0.], [-np.sin(o[0]), 0., np.cos(o[0])]])
-    RotPhi = np.array([[np.cos(o[1]), np.sin(o[1]), 0.], [-np.sin(o[1]), np.cos(o[1]), 0.], [0., 0., 1.]])
+    RotPhi = np.array([[np.cos(o[1]), -np.sin(o[1]), 0.], [np.sin(o[1]), np.cos(o[1]), 0.], [0., 0., 1.]])
 
     r = np.zeros(3)
     r[0] = np.sin(omega[0]) * np.cos(omega[1])

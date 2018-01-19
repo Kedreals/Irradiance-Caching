@@ -4,6 +4,7 @@ import numpy as np
 from intersection import Intersection
 from ray import Ray
 from multiprocessing import Pool
+from Octree import Octree
 import time
 
 """    def generateSample(self, intersection, scene, camera, ray, depth = 0):
@@ -35,7 +36,7 @@ class IrradianceIntegrator(Integrator):
         self.showSamples = showSamplePoints
         self.maxBounceDepth = maxBounceDepth
         self.cache = []
-        [self.cache.append([]) for i in range(maxBounceDepth + 1)]
+        [self.cache.append(Octree([0.0, 0.0, 0.0], 50, [])) for i in range(maxBounceDepth + 1)]
         self.parallel = False
 
     def generateSample(self, intersection, scene, camera, ray, depth=0):
@@ -57,20 +58,20 @@ class IrradianceIntegrator(Integrator):
                     intVal = self.getInterpolatedValue(procData, depth - 1)
                     # if interpolation is successful
                     if (intVal >= 0):
-                        lightval = intVal * ni.BSDF(procData.avgLightDir, d, intersection.n)
+                        lightval = intVal * ni.BSDF(procData.avgLightDir, d, ni.n)
                         l += lightval * np.pi
                         sample.avgLightDir += d * lightval
-                    # else make a new sample und use this irradiance
+                    # else make a new sample und use its irradiance
                     else:
                         s = self.generateSample(ni, scene, camera, r, depth - 1)
-                        lightval = s.irradiance * ni.BSDF(s.avgLightDir, d, intersection.n)
+                        lightval = s.irradiance * ni.BSDF(s.avgLightDir, d, ni.n)
                         l += lightval * np.pi
                         sample.avgLightDir += s.avgLightDir * lightval
 
             l /= numSample
         else:
-            # generate a sample for
-            l = intersection.ell + self.MonteCarlo(intersection, scene, minSamples, sample)
+            # generate a sample for direct light
+            l = self.MonteCarlo(intersection, scene, minSamples, sample) #+ intersection.ell
 
         pixelSpacing = self.computeIntersectionPixelSpacing(camera, ray, intersection)
         sample.irradiance = l
@@ -82,7 +83,7 @@ class IrradianceIntegrator(Integrator):
         if ((self.showSamples) & (depth == self.maxBounceDepth)):
             camera.image[ray.pixel[0], ray.pixel[1], :] = [1., 0., 0.]
 
-        self.cache[depth].append(sample)
+        self.cache[depth].addObj(sample)
         return sample
 
     def fillCachParallelHelp(self, XYSC):
@@ -115,29 +116,6 @@ class IrradianceIntegrator(Integrator):
                     if (scene.intersect(ray, intersection)):
                         s = self.generateSample(intersection, scene, camera, ray, self.maxBounceDepth)
 
-    def getCosineWeightedPointR3(self, n):
-        o = np.zeros(2)
-        o[0] = np.arccos(n[2])
-        o[1] = np.arctan2(n[1], n[0])
-
-        omega = np.random.rand(2)
-        omega[0] = np.arcsin(np.sqrt(omega[0]))
-        omega[1] *= np.pi * 2
-
-        RotTheta = np.array([[np.cos(o[0]), 0., np.sin(o[0])], [0., 1., 0.], [-np.sin(o[0]), 0., np.cos(o[0])]])
-        RotPhi = np.array([[np.cos(o[1]), -np.sin(o[1]), 0.], [np.sin(o[1]), np.cos(o[1]), 0.], [0., 0., 1.]])
-
-        r = np.zeros(3)
-        r[0] = np.sin(omega[0]) * np.cos(omega[1])
-        r[1] = np.sin(omega[0]) * np.sin(omega[1])
-        r[2] = np.cos(omega[0])
-
-        r = np.dot(RotPhi, np.dot(RotTheta, r))
-
-        if np.dot(n, r) < 0:
-            print("d=", r, ", n=", n)
-
-        return r
 
     def MonteCarlo(self, intersection, scene, sampleCount=64, sample=None):
         res = 0.0
@@ -164,7 +142,7 @@ class IrradianceIntegrator(Integrator):
         return res
 
     def ell(self, scene, ray, camera):
-        if (len(self.cache[0]) == 0):
+        if ((ray.pixel[0] == 0) & (ray.pixel[1] == 0)):
             start = time.perf_counter()
             self.fillCache(camera, scene)
             end = time.perf_counter()
@@ -175,9 +153,10 @@ class IrradianceIntegrator(Integrator):
             m = m % 60
 
             print("filling cache took:", h, "h ", m, "min ", s, "s")
-            for i in range(len(self.cache)):
-                ze = sum(s.irradiance == 0 for s in self.cache[i])
-                print("In cache depth: ", i, " have ä", ze, " of ", len(self.cache[i]), "elements 0 (ir)radiance")
+            #obsolete, because cannot iterate through octree
+            #for i in range(len(self.cache)):
+            #   ze = sum(s.irradiance == 0 for s in self.cache[i])
+            #    print("In cache depth: ", i, " have ä", ze, " of ", len(self.cache[i]), "elements 0 (ir)radiance")
 
         intersection = Intersection()
         if (scene.intersect(ray, intersection)):
@@ -187,21 +166,24 @@ class IrradianceIntegrator(Integrator):
                 interpolatedPoint = Irradiance_ProcessData(intersection.pos, intersection.n, self.minWeight,
                                                            self.maxCosAngleDiff)
                 interpval = self.getInterpolatedValue(interpolatedPoint, i)
-                if (interpval < 0) is False:
+                if (interpval >= 0):
                     val += interpval * intersection.BSDF(interpolatedPoint.avgLightDir, -ray.d, intersection.n)
                 else:
+                    print("new sample generated at ", ray.pixel)
                     s = self.generateSample(intersection, scene, camera, ray, i)
-                    self.cache[i].append(s)
                     val += s.irradiance * intersection.BSDF(s.avgLightDir, -ray.d, intersection.n)
             sample = Irradiance_Sample(intersection.pos, intersection.n)
             self.MonteCarlo(intersection, scene, sample=sample)
 
+            #print(val)
             val = val + sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n)
+            if(val < 0):
+                print(val)
 
-        return np.min([1, (val + intersection.ell)]) * intersection.color
+        return val * intersection.color #np.min([1, (val + intersection.ell)]) * intersection.color
 
     def getInterpolatedValue(self, interpolationPoint, depth):
-        for sample in self.cache[depth]:
+        for sample in self.cache[depth].find(interpolationPoint.pos):
             self.interpolate(interpolationPoint, sample)
         if (self.interpolationSuccessful(interpolationPoint)):
             norm = np.linalg.norm(interpolationPoint.avgLightDir)

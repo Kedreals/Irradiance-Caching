@@ -110,14 +110,14 @@ def renderTest(res_x, res_y, scene, integrator):
     return cam.image
 
 
-integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0, True, 1)
+integrator = IrradianceIntegrator(1, 10, 0.1, np.pi / 4.0, False, 1)
 scene = createScene("box")
 
 start = time.perf_counter()
-im = render(256, 256, scene, integrator)
+im = render(64, 64, scene, integrator)
 end = time.perf_counter()
 
-#im = im * (1 / im.max())
+im = im * (1 / np.max([1, im.max()]))
 
 seconds = end - start
 minutes = int(seconds / 60)

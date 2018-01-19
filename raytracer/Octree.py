@@ -13,7 +13,7 @@ class Octree:
         return sum([1 for i in range(8) if self.branches[i] is not None]) == 0
 
     def collide(self, objData):
-        size = self.size + objData.r
+        size = self.size + objData.maxDist
         v = objData.pos - self.position
         return sum([1 for i in range(3) if abs(v[i]) <= size]) == 3
 
