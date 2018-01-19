@@ -142,9 +142,9 @@ class IrradianceIntegrator(Integrator):
                 sample.avgLightDir = sample.avgLightDir / np.linalg.norm(sample.avgLightDir)
             #min Hit distance is the closest intersection found while shooting rays in the hemisphere
             sample.minHitDist = minHitDist
-            sample.irradiance = res
+        sample.irradiance = res #+ intersection.ell
 
-        return res
+        return res #+ intersection.ell
 
     def ell(self, scene, ray, camera):
         #very first call for ell() means the cache has to be filled

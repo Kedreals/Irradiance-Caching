@@ -113,8 +113,10 @@ def renderTest(res_x, res_y, scene, integrator):
 integrator = IrradianceIntegrator(1, 10, 0.1, np.pi / 4.0, False, 2)
 scene = createScene("box")
 
+resolution = 64
+
 start = time.perf_counter()
-im = render(64, 64, scene, integrator)
+im = render(resolution, resolution, scene, integrator)
 end = time.perf_counter()
 
 im = im * (1 / np.max([1, im.max()]))
