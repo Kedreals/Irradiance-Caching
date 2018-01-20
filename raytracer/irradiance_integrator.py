@@ -49,7 +49,7 @@ class IrradianceIntegrator(Integrator):
             numSample = minSamples  # * depth
             for i in range(numSample):
                 d = self.getCosineWeightedPointR3(intersection.n)
-                r = Ray(intersection.pos + 0.001 * d, d)
+                r = Ray(intersection.pos + 0.001 * intersection.n, d)
                 ni = Intersection()
                 if (scene.intersect(r, ni)):
                     if (sample.minHitDist > r.t):
@@ -59,19 +59,29 @@ class IrradianceIntegrator(Integrator):
                     # if interpolation is successful
                     if (intVal >= 0):
                         lightval = intVal * ni.BSDF(procData.avgLightDir, d, ni.n)
+                        """
+                        if lightval < 0:
+                            print("WARNING: Interpolation lead to a negative light value")
+                        """
+
                         l += lightval * np.pi
                         sample.avgLightDir += d * lightval
                     # else make a new sample und use its irradiance
                     else:
                         s = self.generateSample(ni, scene, camera, r, depth - 1)
                         lightval = s.irradiance * ni.BSDF(s.avgLightDir, d, ni.n)
+                        if lightval < 0:
+                            print("ERROR: Generating a new sample lead to a negative light value")
                         l += lightval * np.pi
-                        sample.avgLightDir += s.avgLightDir * lightval
+                        sample.avgLightDir += d * lightval #s.avgLightDir
+
+                    if np.dot(sample.avgLightDir, sample.normal) < 0:
+                        print("WARNING: The average Light direction points in the wrong half space")
 
             l /= numSample
         else:
             # generate a sample for direct light
-            l = self.MonteCarlo(intersection, scene, minSamples, sample) + intersection.ell
+            l = self.MonteCarlo(intersection, scene, minSamples, sample) #+ intersection.ell
 
         pixelSpacing = self.computeIntersectionPixelSpacing(camera, ray, intersection)
         sample.irradiance = l
@@ -82,6 +92,9 @@ class IrradianceIntegrator(Integrator):
 
         if ((self.showSamples) & (depth == self.maxBounceDepth)):
             camera.image[ray.pixel[0], ray.pixel[1], :] = [1., 0., 0.]
+
+        if np.dot(sample.avgLightDir, sample.normal) < 0:
+            print("ERROR: Sample was generated with avgLightDir pointing in the wrong half space")
 
         self.cache[depth].addObj(sample)
         return sample
@@ -172,14 +185,20 @@ class IrradianceIntegrator(Integrator):
                 interpolatedPoint = Irradiance_ProcessData(intersection.pos, intersection.n, self.minWeight,
                                                            self.maxCosAngleDiff)
                 interpval = self.getInterpolatedValue(interpolatedPoint, i)
+                e = 0
                 if (interpval >= 0):
-                    val += interpval * intersection.BSDF(interpolatedPoint.avgLightDir, -ray.d, intersection.n)
+                    e += interpval * intersection.BSDF(interpolatedPoint.avgLightDir, -ray.d, intersection.n)
 
                 #if interpolation failed, compute new sample
                 else:
                     print("new sample generated at ", ray.pixel)
                     s = self.generateSample(intersection, scene, camera, ray, i)
-                    val += s.irradiance * intersection.BSDF(s.avgLightDir, -ray.d, intersection.n)
+                    e += s.irradiance * intersection.BSDF(s.avgLightDir, -ray.d, s.normal)
+
+                if e < 0:
+                    print(e)
+
+                val += e
 
             #compute direct light
             sample = Irradiance_Sample(intersection.pos, intersection.n)
@@ -247,6 +266,10 @@ class IrradianceIntegrator(Integrator):
             newPoint.avgLightDir += weight * sample.avgLightDir
             newPoint.sumWeight += weight
 
+        """
+        if np.dot(newPoint.normal, newPoint.avgLightDir) < 0:
+            print("Dam Dam DAAAAAAM")
+        """
     def interpolationSuccessful(self, newPoint):
         # pbrt 794
         return newPoint.sumWeight >= newPoint.minWeight

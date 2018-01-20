@@ -110,10 +110,10 @@ def renderTest(res_x, res_y, scene, integrator):
     return cam.image
 
 
-integrator = IrradianceIntegrator(1, 10, 0.1, np.pi / 4.0, False, 2)
+integrator = IrradianceIntegrator(4, 80, 0.1, np.pi / 4.0, False, 2)
 scene = createScene("box")
 
-resolution = 64
+resolution = 1024
 
 start = time.perf_counter()
 im = render(resolution, resolution, scene, integrator)
