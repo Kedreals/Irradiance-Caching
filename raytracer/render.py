@@ -20,7 +20,6 @@ from irradiance_integrator import IrradianceIntegrator
 import time
 from multiprocessing import Pool
 
-
 def createScene(name="simple"):
     scene = Scene()
 
@@ -83,7 +82,7 @@ def render(res_x, res_y, scene, integrator):
 
     for ix in range(res_x):
         d = int(10000 * ix / res_x) / 100
-        print("Finished Rendering", d, "% of the Pixels")
+        print("\033[30mFinished Rendering\033[36m", d, "%\033[30m of the Pixels")
         for iy in range(res_y):
 
             r = cam.generateRay(ix, iy)
@@ -91,6 +90,9 @@ def render(res_x, res_y, scene, integrator):
             ellval = integrator.ell(scene, r, cam)
             if (integrator.showSamples is not True) | ((cam.image[ix, iy, :] != 0).sum() == 0):
                 cam.image[ix, iy, :] = ellval
+
+    for i in range(len(integrator.cache)):
+        print("\033[32mINFO:\033[30m Cache Level", i, "has", integrator.cache[i].objCount,"many samples")
 
     return cam.image
 
@@ -110,16 +112,24 @@ def renderTest(res_x, res_y, scene, integrator):
     return cam.image
 
 
-integrator = IrradianceIntegrator(4, 80, 0.1, np.pi / 4.0, False, 2)
+def ScaleImageSqrt(image):
+    image = np.sqrt(image)
+    return image / image.max()
+
+
+def ScaleImageLog(image):
+    image = np.log10(image + 1)
+    return image / image.max()
+
+
+integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0, False, 2)
 scene = createScene("box")
 
-resolution = 1024
+resolution = 64
 
 start = time.perf_counter()
 im = render(resolution, resolution, scene, integrator)
 end = time.perf_counter()
-
-im = im * (1 / np.max([1, im.max()]))
 
 seconds = end - start
 minutes = int(seconds / 60)
@@ -129,5 +139,15 @@ minutes = minutes % 60
 
 print("Execution time = ", hours, ":", minutes, ":", seconds)
 
-plt.imshow(im)
+#plt.figure()
+#plt.imshow(im)
+
+plt.figure()
+plt.imshow(ScaleImageSqrt(im))
+plt.title("Square root scaled image")
+
+plt.figure()
+plt.imshow(ScaleImageLog(im))
+plt.title("Logarithmically scaled image ")
 plt.show()
+

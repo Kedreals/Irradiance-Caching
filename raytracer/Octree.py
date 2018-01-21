@@ -8,6 +8,7 @@ class Octree:
         self.size = size
         self.objData = objData
         self.branches = [None for i in range(8)]
+        self.objCount = 0
 
     def isLeaf(self):
         return sum([1 for i in range(8) if self.branches[i] is not None]) == 0
@@ -27,6 +28,7 @@ class Octree:
         self.objData = []
 
     def addObj(self, objData):
+        self.objCount += 1
         if self.isLeaf():
             self.objData.append(objData)
             # if is too much split

@@ -29,7 +29,12 @@ class Plane(Shape):
         if (t > 0) & (t < ray.t):
             ray.t = t
             intersection.pos = ray.o + ray.t * ray.d
-            intersection.n = self.n
+
+            if np.dot(ray.d, self.n) > 0:
+                intersection.n = -self.n
+            else:
+                intersection.n = self.n
+
             intersection.ell = self.ell
             intersection.color = self.color
             return True
@@ -71,7 +76,12 @@ class Rectangle(Plane):
 
         ray.t = t
         intersection.pos = ray.o + ray.t * ray.d
-        intersection.n = self.n
+
+        if np.dot(self.n, ray.d) > 0:
+            intersection.n = -self.n
+        else:
+            intersection.n = self.n
+
         intersection.ell = self.ell
         intersection.color = self.color
         return True
