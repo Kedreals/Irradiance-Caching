@@ -15,7 +15,7 @@ class Camera :
         self.pos = np.zeros( 3)
         self.viewdir = np.array( [0.0, 0.0, 1.0])
         self.updir = np.array( [0.0, 1.0, 0.0])
-        self.fov = (30.0 * np.pi) / 180.0
+        self.fov = (90.0 * np.pi) / 180.0
         self.flength = 1.0
         self.image = np.zeros( [res_x, res_y, 3])
     

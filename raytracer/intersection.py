@@ -13,4 +13,7 @@ class Intersection :
         self.n = normal
         self.color = np.array([1., 1., 1.])
         self.ell = 0.0
-        self.BSDF = DiffuseBSDF
+        self.m_BSDF = DiffuseBSDF
+
+    def BSDF(self, lightIn, lightOut, n):
+        return np.min([1., np.max([0., self.m_BSDF(lightIn, lightOut, n)])])

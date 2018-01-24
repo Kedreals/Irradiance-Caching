@@ -42,7 +42,7 @@ class IrradianceIntegrator(Integrator):
     def generateSample(self, intersection, scene, camera, ray, depth=0):
         sample = Irradiance_Sample(intersection.pos, intersection.n)
         minSamples = 64
-        l = 0
+        l = np.array([0., 0., 0.])
 
         # generate a sample for irradiance
         if (depth > 0):
@@ -57,23 +57,23 @@ class IrradianceIntegrator(Integrator):
                     procData = Irradiance_ProcessData(ni.pos, ni.n, self.minWeight, self.maxCosAngleDiff)
                     intVal = self.getInterpolatedValue(procData, depth - 1)
                     # if interpolation is successful
-                    if (intVal >= 0):
-                        lightval = intVal * ni.BSDF(procData.avgLightDir, d, ni.n)
+                    if (intVal >= 0).all():
+                        lightval = ni.color * intVal * ni.BSDF(procData.avgLightDir, d, ni.n)
                         """
                         if lightval < 0:
                             print("\033[34mWARNING\033[30m: Interpolation lead to a negative light value")
                         """
 
                         l += lightval
-                        sample.avgLightDir += d * lightval
+                        sample.avgLightDir += d * np.linalg.norm(lightval)
                     # else make a new sample und use its irradiance
                     else:
                         s = self.generateSample(ni, scene, camera, r, depth - 1)
-                        lightval = s.irradiance * ni.BSDF(s.avgLightDir, d, ni.n)
-                        if lightval < 0:
+                        lightval = ni.color * s.irradiance * ni.BSDF(s.avgLightDir, d, ni.n)
+                        if (lightval < 0).any():
                             print("\033[31mERROR\033[30m: Generating a new sample lead to a negative light value")
                         l += lightval
-                        sample.avgLightDir += d * lightval #s.avgLightDir
+                        sample.avgLightDir += d * np.linalg.norm(lightval) #s.avgLightDir
 
                     if np.dot(sample.avgLightDir, sample.normal) < 0:
                         print("\033[34mWARNING\033[30m: The average Light direction points temporally in the wrong half space")
@@ -141,7 +141,7 @@ class IrradianceIntegrator(Integrator):
             if (scene.intersect(r, ni)):
                 if (r.t < minHitDist):
                     minHitDist = r.t
-                res += ni.ell
+                res += ni.ell * ni.color
 
                 #if a sample is given, add the current hemisphere ray to average light direction
                 #weight it by how much impact it has on the resulting radiance
@@ -180,15 +180,15 @@ class IrradianceIntegrator(Integrator):
             #    print("In cache depth: ", i, " have ä", ze, " of ", len(self.cache[i]), "elements 0 (ir)radiance")
 
         intersection = Intersection()
+        val = np.array([0.0, 0., 0.])
         if (scene.intersect(ray, intersection)):
-            val = 0.0
             #interpolate indirect light
             for i in range(self.maxBounceDepth, 0, -1):
                 interpolatedPoint = Irradiance_ProcessData(intersection.pos, intersection.n, self.minWeight,
                                                            self.maxCosAngleDiff)
                 interpval = self.getInterpolatedValue(interpolatedPoint, i)
                 e = 0
-                if (interpval >= 0):
+                if (interpval >= 0).all():
                     e += interpval * intersection.BSDF(interpolatedPoint.avgLightDir, -ray.d, intersection.n)
 
                 #if interpolation failed, compute new sample
@@ -197,7 +197,7 @@ class IrradianceIntegrator(Integrator):
                     s = self.generateSample(intersection, scene, camera, ray, i)
                     e += s.irradiance * intersection.BSDF(s.avgLightDir, -ray.d, s.normal)
 
-                if e < 0:
+                if (e < 0).any():
                     print(e)
 
                 val += e
@@ -207,8 +207,8 @@ class IrradianceIntegrator(Integrator):
             self.MonteCarlo(intersection, scene, sampleCount=128, sample=sample)
 
             val += sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n)
-            if(val < 0):
-                print(val)
+            if(val < 0).any():
+                print("light value is negative :", val)
 
         return (val + intersection.ell) * intersection.color
 
@@ -225,7 +225,7 @@ class IrradianceIntegrator(Integrator):
             return interpolationPoint.irradiance / interpolationPoint.sumWeight
         #else return a sign, that this is not a useful interpolation
         else:
-            return -1
+            return np.array([-1, -1, -1])
 
     #magic formula from pbrt book
     def computeIntersectionPixelSpacing(self, camera, ray, intersection):

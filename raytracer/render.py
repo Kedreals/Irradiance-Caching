@@ -30,14 +30,19 @@ def createScene(name="simple"):
         scene.objects.append(sphere)
         scene.objects.append(plane)
     elif name == "box":
-        leftWall = Rectangle(np.array([0., -4., 5.]), np.array([0., 1., 0.]), np.array([8, 4]))
-        rightWall = Rectangle(np.array([0., 4., 5.]), np.array([0., -1., 0]), np.array([8, 4]))
-        floor = Rectangle(np.array([4., 0., 5.]), np.array([-1., 0., 0.]), np.array([8, 4]))
-        ceiling = Rectangle(np.array([-4, 0, 5.]), np.array([1., 0., 0.]), np.array([8, 4]))
-        back = Rectangle(np.array([0., 0., 13.]), np.array([0., 0., -1.]), np.array([4, 4]))
-        front = Rectangle(np.array([0, 0., -3.]), np.array([0., 0., 1.]), np.array([4, 4]))
-        squareLight = Rectangle(np.array([-3.99, 0, 5.]), np.array([1, 0, 0.]), np.array([4, 2]), 5)
-        redBall = Sphere(np.array([0., 0., 5.]), 1, 0, np.array([0., 0., 1.]))
+
+        size = 4
+        pos = 3
+
+
+        leftWall = Rectangle(np.array([0., -size, pos]), np.array([0., 1., 0.]), np.array([size, size]), color=np.array([1., 0.2, 0.2]))
+        rightWall = Rectangle(np.array([0., size, pos]), np.array([0., -1., 0]), np.array([size, size]), color=np.array([0.2, 1., 0.2]))
+        floor = Rectangle(np.array([size, 0., pos]), np.array([-1., 0., 0.]), np.array([size, size]), color=np.array([0.2, 0.2, 1.]))
+        ceiling = Rectangle(np.array([-size, 0, pos]), np.array([1., 0., 0.]), np.array([size, size]), color=np.array([1., 1., 0.2]))
+        back = Rectangle(np.array([0., 0., pos+size]), np.array([0., 0., -1.]), np.array([size, size]), color=np.array([1., 0.2, 1.]))
+        front = Rectangle(np.array([0, 0., pos-size]), np.array([0., 0., 1.]), np.array([size, size]), color=np.array([1., 1., 1.]))
+        squareLight = Rectangle(np.array([-size + 0.01, 0, pos]), np.array([1, 0, 0.]), np.array([size, size/2]), 3)
+        redBall = Sphere(np.array([3., 0., pos+size-1]), 1, 0, np.array([1., 0.2, 1.]))
 
         scene.objects.append(leftWall)
         scene.objects.append(rightWall)
@@ -122,10 +127,10 @@ def ScaleImageLog(image):
     return image / image.max()
 
 
-integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0, False, 2)
+integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0, False, 4)
 scene = createScene("box")
 
-resolution = 64
+resolution = 512
 
 start = time.perf_counter()
 im = render(resolution, resolution, scene, integrator)
