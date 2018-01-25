@@ -204,7 +204,7 @@ class IrradianceIntegrator(Integrator):
 
             #compute direct light
             sample = Irradiance_Sample(intersection.pos, intersection.n)
-            self.MonteCarlo(intersection, scene, sampleCount=128, sample=sample)
+            self.MonteCarlo(intersection, scene, sampleCount=64, sample=sample)
 
             val += sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n)
             if(val < 0).any():

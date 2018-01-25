@@ -14,6 +14,7 @@ from camera import Camera
 from sphere import Sphere
 from plane import Plane
 from plane import Rectangle
+from cuboid import Cuboid
 from scene import Scene
 from basic_integrator import BasicIntegrator
 from irradiance_integrator import IrradianceIntegrator
@@ -43,6 +44,7 @@ def createScene(name="simple"):
         front = Rectangle(np.array([0, 0., pos-size]), np.array([0., 0., 1.]), np.array([size, size]), color=np.array([1., 1., 1.]))
         squareLight = Rectangle(np.array([-size + 0.01, 0, pos]), np.array([1, 0, 0.]), np.array([size, size/2]), 3)
         redBall = Sphere(np.array([3., 0., pos+size-1]), 1, 0, np.array([1., 0.2, 1.]))
+        cube = Cuboid(np.array([1., 0.0, pos]), np.array([0.5, 1, 0.5]))
 
         scene.objects.append(leftWall)
         scene.objects.append(rightWall)
@@ -52,6 +54,7 @@ def createScene(name="simple"):
         scene.objects.append(front)
         scene.objects.append(squareLight)
         scene.objects.append(redBall)
+        scene.objects.append(cube)
 
     return scene
 
@@ -127,10 +130,10 @@ def ScaleImageLog(image):
     return image / image.max()
 
 
-integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0, False, 4)
+integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0, False, 2)
 scene = createScene("box")
 
-resolution = 512
+resolution = 64
 
 start = time.perf_counter()
 im = render(resolution, resolution, scene, integrator)
