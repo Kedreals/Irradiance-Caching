@@ -74,6 +74,9 @@ class Rectangle(Plane):
         if (abs(p[0]) > self.bounds[0]) | (abs(p[1]) > self.bounds[1]):
             return False
 
+        if t <= 0:
+            return False
+
         ray.t = t
         intersection.pos = ray.o + ray.t * ray.d
 

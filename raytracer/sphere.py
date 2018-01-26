@@ -36,14 +36,14 @@ class Sphere( Shape) :
         s2 = 1.0/2.0 * ( -b - temp)
         
         sol = s1
-        if s1 < 0.0 and s2 < 0.0:
+        if s1 <= 0.0 and s2 <= 0.0:
             return False
-        if s1 < 0.0:
+        if s1 <= 0.0:
             sol = s2
-        elif s2 < 0.0 : 
+        elif s2 <= 0.0:
             sol = s1
 
-        elif s2 < s1 :
+        elif s2 < s1:
             sol = s2
             
         if sol < ray.t :

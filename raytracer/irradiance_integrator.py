@@ -52,6 +52,8 @@ class IrradianceIntegrator(Integrator):
                 r = Ray(intersection.pos + 0.001 * intersection.n, d)
                 ni = Intersection()
                 if (scene.intersect(r, ni)):
+                    if r.t <= 0:
+                        print("\033[34mWARNING\033[30m: ray intersects with t <= 0")
                     if (sample.minHitDist > r.t):
                         sample.minHitDist = r.t
                     procData = Irradiance_ProcessData(ni.pos, ni.n, self.minWeight, self.maxCosAngleDiff)
