@@ -7,6 +7,8 @@ class Irradiance_Sample():
         minDist = minPixelSpacing * intersectionPixelSpacing
         maxDist = maxPixelSpacing * intersectionPixelSpacing
         contribExtend = np.clip(self.minHitDist / 2.0, minDist, maxDist)
+        if contribExtend <= 0:
+            print("\033[34mWARNING\033[30m: maxDist of sample is lower or equal to 0")
         self.maxDist = contribExtend
         return contribExtend
 

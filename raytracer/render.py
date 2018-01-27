@@ -44,7 +44,7 @@ def createScene(name="simple"):
         front = Rectangle(np.array([0, 0., pos-size]), np.array([0., 0., 1.]), np.array([size, size]), color=np.array([1., 1., 1.]))
         squareLight = Rectangle(np.array([-size + 0.01, 0, pos]), np.array([1, 0, 0.]), np.array([size, size/2]), 3)
         redBall = Sphere(np.array([3., 0., pos+size-1]), 1, 0, np.array([1., 0.2, 1.]))
-        cube = Cuboid(np.array([3., 0.0, pos+size-1]), np.array([0.5, 1, 0.5]))
+        cube = Cuboid(np.array([0., 3., pos+size-1]), np.array([1, 1, 1]), rotation=np.array([0., 0., 0.]))
 
         scene.objects.append(leftWall)
         scene.objects.append(rightWall)

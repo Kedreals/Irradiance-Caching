@@ -41,7 +41,7 @@ class Cuboid(Shape):
 
     def intersect(self, ray, intersection):
         p = ray.o-self.pos
-        if (np.dot(self.base, ray.d) == 0).all():
+        if (abs(np.dot(self.base, ray.d)) <= 0.001).all():
             return False
         #left and right side of the inequalities bounding the t
         L = -np.ones(3)
@@ -50,6 +50,10 @@ class Cuboid(Shape):
         I = np.dot(self.base, ray.d) < 0
         #if the origin is outside the bounds in one dimention where the direction points away from the position there is no intersection
         if (np.dot(self.base, p)[~I] > self.bounds[~I]).any():
+            return False
+
+        J = abs(np.dot(self.base, ray.d)) < 0.001
+        if (abs(np.dot(self.base, p)[J]) > self.bounds[J]).any():
             return False
 
         L[I] = L[I]*-1
