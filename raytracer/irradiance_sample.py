@@ -21,6 +21,7 @@ class Irradiance_Sample():
         self.minHitDist = np.infty
         self.maxDist = maxDistance
         self.avgLightDir = np.zeros(3)
+        self.rotGrad = np.zeros(3)
 
 class Irradiance_ProcessData():
     def __init__(self, pos, normal, minWeight, maxCosAngleDiff):

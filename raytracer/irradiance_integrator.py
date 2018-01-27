@@ -48,7 +48,8 @@ class IrradianceIntegrator(Integrator):
         if (depth > 0):
             numSample = minSamples  # * depth
             for i in range(numSample):
-                d = self.getCosineWeightedPointR3(intersection.n)
+                h2Vec = self.getCosineWeightedPointH2()
+                d = self.transformH2toR3(h2Vec, intersection.n)
                 r = Ray(intersection.pos + 0.001 * intersection.n, d)
                 ni = Intersection()
                 if (scene.intersect(r, ni)):
@@ -68,6 +69,8 @@ class IrradianceIntegrator(Integrator):
 
                         l += lightval
                         sample.avgLightDir += d * np.linalg.norm(lightval)
+                        v = self.transformH2toR3(h2Vec, np.array([0.0, 0.0, 1.0]))
+                        sample.rotGrad += -np.array([v[1] / v[2], -v[0] / v[2], 0.0]) * np.linalg.norm(lightval)
                     # else make a new sample und use its irradiance
                     else:
                         s = self.generateSample(ni, scene, camera, r, depth - 1)
@@ -76,11 +79,14 @@ class IrradianceIntegrator(Integrator):
                             print("\033[31mERROR\033[30m: Generating a new sample lead to a negative light value")
                         l += lightval
                         sample.avgLightDir += d * np.linalg.norm(lightval) #s.avgLightDir
+                        v = self.transformH2toR3(h2Vec, np.array([0.0, 0.0, 1.0]))
+                        sample.rotGrad += -np.array([v[1] / v[2], -v[0] / v[2], 0.0]) * np.linalg.norm(lightval)
 
                     if np.dot(sample.avgLightDir, sample.normal) < 0:
                         print("\033[34mWARNING\033[30m: The average Light direction points temporally in the wrong half space")
 
             l *= np.pi/numSample
+            sample.rotGrad *= np.pi/numSample
         else:
             # generate a sample for direct light
             l = self.MonteCarlo(intersection, scene, minSamples, sample) #+ intersection.ell
@@ -137,7 +143,8 @@ class IrradianceIntegrator(Integrator):
         minHitDist = np.infty
 
         for i in range(sampleCount):
-            d = self.getCosineWeightedPointR3(intersection.n)
+            h2Vec = self.getCosineWeightedPointH2()
+            d = self.transformH2toR3(h2Vec, intersection.n)
             r = Ray(intersection.pos + 0.001 * intersection.n, d)
             ni = Intersection()
             if (scene.intersect(r, ni)):
@@ -149,6 +156,8 @@ class IrradianceIntegrator(Integrator):
                 #weight it by how much impact it has on the resulting radiance
                 if ((sample != None) & (ni.ell > 0)):
                     sample.avgLightDir += d * ni.ell
+                    v = self.transformH2toR3(h2Vec, np.array([0.0, 0.0, 1.0]))
+                    sample.rotGrad += -np.array([v[1]/v[2], -v[0]/v[2], 0.0]) * ni.ell
 
         res *= np.pi / sampleCount
         if (sample != None):
@@ -157,7 +166,8 @@ class IrradianceIntegrator(Integrator):
                 sample.avgLightDir = sample.avgLightDir / np.linalg.norm(sample.avgLightDir)
             #min Hit distance is the closest intersection found while shooting rays in the hemisphere
             sample.minHitDist = minHitDist
-        sample.irradiance = res #+ intersection.ell
+            sample.irradiance = res #+ intersection.ell
+            sample.rotGrad *= np.pi / sampleCount
 
         return res #+ intersection.ell
 
@@ -251,28 +261,42 @@ class IrradianceIntegrator(Integrator):
         return pixelspacing
 
     #interpolate with error calulation used in pbrt book
-    def interpolate(self, newPoint, sample):
-        # pbrt 794
-        perr = np.linalg.norm(newPoint.pos - sample.pos) / sample.maxDist
-        val = np.max([0, (1.0 - np.dot(newPoint.normal, sample.normal)) / (1.0 - newPoint.maxCosAngleDiff)])
-        if (val < 0):
-            print(val)
-            print(np.dot(newPoint.normal, sample.normal))
-            print((1.0 - newPoint.maxCosAngleDiff))
-        nerr = np.sqrt(val)
+    def interpolate(self, newPoint, sample, useWard = False, useRotGrad = True):
 
-        err = np.max([perr, nerr])
-
-        if (err < 1.0):
-            weight = 1.0 - err
+        if(useWard):
+            #use wards weighting function
+            weight = 1 / (np.linalg.norm(newPoint.pos - sample.pos) / sample.maxDist + np.sqrt(
+                1 - np.dot(newPoint.normal, sample.normal)) + 0.00000000000001)
             newPoint.irradiance += weight * sample.irradiance
+            if(useRotGrad):
+                newPoint.irradiance += weight * np.dot(sample.rotGrad, np.cross(sample.normal, newPoint.normal))
             newPoint.avgLightDir += weight * sample.avgLightDir
             newPoint.sumWeight += weight
 
+        else:
+            # pbrt 794
+            perr = np.linalg.norm(newPoint.pos - sample.pos) / sample.maxDist
+            val = np.max([0, (1.0 - np.dot(newPoint.normal, sample.normal)) / (1.0 - newPoint.maxCosAngleDiff)])
+            if (val < 0):
+                print(val)
+                print(np.dot(newPoint.normal, sample.normal))
+                print((1.0 - newPoint.maxCosAngleDiff))
+            nerr = np.sqrt(val)
+
+            err = np.max([perr, nerr])
+
+            if (err < 1.0):
+                weight = 1.0 - err
+                newPoint.irradiance += weight * sample.irradiance
+                if (useRotGrad):
+                    newPoint.irradiance += weight * np.dot(sample.rotGrad, np.cross(sample.normal, newPoint.normal))
+                newPoint.avgLightDir += weight * sample.avgLightDir
+                newPoint.sumWeight += weight
         """
         if np.dot(newPoint.normal, newPoint.avgLightDir) < 0:
             print("Dam Dam DAAAAAAM")
         """
+
     def interpolationSuccessful(self, newPoint):
         # pbrt 794
         return newPoint.sumWeight >= newPoint.minWeight
