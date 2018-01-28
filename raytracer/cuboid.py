@@ -44,8 +44,8 @@ class Cuboid(Shape):
         if (abs(np.dot(self.base, ray.d)) <= 0.001).all():
             return False
         #left and right side of the inequalities bounding the t
-        L = -np.ones(3)
-        R = np.ones(3)
+        L = -np.array([self.bounds[0], self.bounds[1], self.bounds[2]])
+        R = np.array([self.bounds[0], self.bounds[1], self.bounds[2]])
         #an index for all the normal vectors that points in a different direction than the ray direction
         I = np.dot(self.base, ray.d) < 0
         #if the origin is outside the bounds in one dimention where the direction points away from the position there is no intersection
@@ -88,23 +88,3 @@ class Cuboid(Shape):
 
         return True
 
-        """\n"
-         "        intersects = False\n"
-         "        possibleSides = []\n"
-         "\n"
-         "        for i in range(3):\n"
-         "            if(np.dot(self.sides[i*2].n, ray.d) < 0):\n"
-         "                possibleSides.append(2*i+1)\n"
-         "            else:\n"
-         "                possibleSides.append(2*i)\n"
-         "\n"
-         "        for i in possibleSides:\n"
-         "            intersects |= self.sides[i].intersect(ray, intersection)\n"
-         "\n"
-         "\n"
-         "        for i in range(6):\n"
-         "            intersects |= self.sides[i].intersect(ray, intersection)\n"
-         "\n"
-         "        return intersects\n"
-         "        ")
-"""

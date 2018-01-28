@@ -69,8 +69,8 @@ class IrradianceIntegrator(Integrator):
 
                         l += lightval
                         sample.avgLightDir += d * np.linalg.norm(lightval)
-                        v = self.transformH2toR3(h2Vec, np.array([0.0, 0.0, 1.0]))
-                        sample.rotGrad += -np.array([v[1] / v[2], -v[0] / v[2], 0.0]) * np.linalg.norm(lightval)
+                        v = self.transformH2toR3(np.array([h2Vec[0], (h2Vec[1] - np.pi / 4) % (2 * np.pi)]), intersection.n)
+                        sample.rotGrad += -v * np.tan(h2Vec[0]) * np.linalg.norm(lightval)
                     # else make a new sample und use its irradiance
                     else:
                         s = self.generateSample(ni, scene, camera, r, depth - 1)
@@ -79,8 +79,8 @@ class IrradianceIntegrator(Integrator):
                             print("\033[31mERROR\033[30m: Generating a new sample lead to a negative light value")
                         l += lightval
                         sample.avgLightDir += d * np.linalg.norm(lightval) #s.avgLightDir
-                        v = self.transformH2toR3(h2Vec, np.array([0.0, 0.0, 1.0]))
-                        sample.rotGrad += -np.array([v[1] / v[2], -v[0] / v[2], 0.0]) * np.linalg.norm(lightval)
+                        v = self.transformH2toR3(np.array([h2Vec[0], (h2Vec[1] - np.pi / 4) % (2 * np.pi)]), intersection.n)
+                        sample.rotGrad += -v * np.tan(h2Vec[0]) * np.linalg.norm(lightval)
 
                     if np.dot(sample.avgLightDir, sample.normal) < 0:
                         print("\033[34mWARNING\033[30m: The average Light direction points temporally in the wrong half space")
@@ -156,8 +156,8 @@ class IrradianceIntegrator(Integrator):
                 #weight it by how much impact it has on the resulting radiance
                 if ((sample != None) & (ni.ell > 0)):
                     sample.avgLightDir += d * ni.ell
-                    v = self.transformH2toR3(h2Vec, np.array([0.0, 0.0, 1.0]))
-                    sample.rotGrad += -np.array([v[1]/v[2], -v[0]/v[2], 0.0]) * ni.ell
+                    v = self.transformH2toR3(np.array([h2Vec[0], (h2Vec[1]-np.pi/4) % (2*np.pi)]), intersection.n)
+                    sample.rotGrad += -v*np.tan(h2Vec[0]) * ni.ell
 
         res *= np.pi / sampleCount
         if (sample != None):
@@ -218,11 +218,11 @@ class IrradianceIntegrator(Integrator):
             sample = Irradiance_Sample(intersection.pos, intersection.n)
             self.MonteCarlo(intersection, scene, sampleCount=64, sample=sample)
 
-            val += sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n)
+            #val += sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n)
             if(val < 0).any():
                 print("light value is negative :", val)
 
-        return (val + intersection.ell) * intersection.color
+        return (val) * intersection.color
 
 
     def getInterpolatedValue(self, interpolationPoint, depth):
