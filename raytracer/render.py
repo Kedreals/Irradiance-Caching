@@ -86,6 +86,87 @@ def createScene(name="simple"):
         scene.objects.append(redBall)
         scene.objects.append(cube)
 
+    elif name == "indirect":
+        size = 4
+        pos = 3
+        lightstrip = 0.5
+        blockersize = 0.5
+
+        leftWall = Rectangle(np.array([0., -size, pos]), np.array([0., 1., 0.]), np.array([size, size]),
+                             color=np.array([1., 0.2, 0.2]))
+        rightWall = Rectangle(np.array([0., size, pos]), np.array([0., -1., 0]), np.array([size, size]),
+                              color=np.array([0.2, 1., 0.2]))
+        floor = Rectangle(np.array([size, 0., pos]), np.array([-1., 0., 0.]), np.array([size, size]),
+                          color=np.array([1., 1., 1.]))
+        ceiling = Rectangle(np.array([-size, 0, pos]), np.array([1., 0., 0.]), np.array([size, size]),
+                            color=np.array([1., 1., 1.0]))
+        back = Rectangle(np.array([0., 0., pos + size]), np.array([0., 0., -1.]), np.array([size, size]),
+                         color=np.array([1., 1., 1.]))
+        front = Rectangle(np.array([0, 0., pos - size]), np.array([0., 0., 1.]), np.array([size, size]),
+                          color=np.array([1., 1., 1.]))
+
+        ceilingLight = Rectangle(np.array([-size + 0.01, 0, pos + size - lightstrip]), np.array([1., 0., 0.]),
+                              np.array([lightstrip, size]), 1)
+        ceilingLightBlock = Cuboid(np.array([-size + blockersize, 0, pos + size-2*lightstrip]),
+                            np.array([blockersize + 0.1, size-0.5, 0.1]), np.array([0., 0., 0.]))
+
+        floorLight = Rectangle(np.array([size - 0.01, 0, pos + size - lightstrip]), np.array([-1., 0., 0.]),
+                                 np.array([lightstrip, size]), 1)
+        floorLightBlock = Cuboid(np.array([size - blockersize, 0, pos + size - 2 * lightstrip]),
+                                   np.array([blockersize + 0.1, size - 0.5, 0.1]), np.array([0., 0., 0.]))
+
+        quader = Cuboid(pos=np.array([0, 0, pos+size-0.5]), bounds=np.array([0.5, 1, 0.5]), rotation=np.array([0, 0, 0]))
+        cube = Cuboid(pos=np.array([3, 1.25, pos + size - 2.5]), bounds=np.array([1., 1., 1.]),
+                      rotation=np.array([35. * np.pi / 180, 0, 0]))
+
+        scene.objects.append(leftWall)
+        scene.objects.append(rightWall)
+        scene.objects.append(floor)
+        scene.objects.append(ceiling)
+        scene.objects.append(back)
+        scene.objects.append(front)
+        scene.objects.append(ceilingLight)
+        scene.objects.append(ceilingLightBlock)
+        scene.objects.append(floorLight)
+        scene.objects.append(floorLightBlock)
+        scene.objects.append(quader)
+        scene.objects.append(cube)
+
+    elif name == "hiddenlight":
+        size = 4
+        pos = 3
+        leftWall = Rectangle(pos=np.array([0, -size, pos]), normal=np.array([0, 1, 0]), bounds=np.array([size, size]),
+                             color=np.array([1., 0.2, 0.2]))
+        rightWall = Rectangle(pos=np.array([0, size, pos]), normal=np.array([0, -1, 0]), bounds=np.array([size, size]),
+                              color=np.array([0.2, 1., 0.2]))
+        floor = Rectangle(pos=np.array([size, 0, pos]), normal=np.array([-1, 0, 0]), bounds=np.array([size, size]),
+                          color=np.array([1., 1., 1.]))
+        ceiling = Rectangle(pos=np.array([-size, 0, pos]), normal=np.array([1, 0, 0]), bounds=np.array([size, size]),
+                            color=np.array([1., 1., 1.]))
+        front = Rectangle(pos=np.array([0, 0, pos - size]), normal=np.array([0, 0, 1]), bounds=np.array([size, size]),
+                          color=np.array([1., 1., 1.]))
+        back = Rectangle(pos=np.array([0, 0, pos + size]), normal=np.array([0, 0, -1]), bounds=np.array([size, size]),
+                         color=np.array([1., 1., 1.]))
+
+        quader = Cuboid(pos=np.array([1.5, -2., pos + size - 1.1]), bounds=np.array([2.5, 1.1, 1.1]),
+                        rotation=np.array([-45. * np.pi / 180., 0, 0]))
+        cube = Cuboid(pos=np.array([3, 1.25, pos + size - 3.5]), bounds=np.array([1., 1., 1.]),
+                      rotation=np.array([35. * np.pi / 180, 0, 0]))
+
+        light = Sphere(np.array([size - 0.5, 0.5, pos + size - 2.2]), 0.5, 10)
+        light2 = Sphere(np.array([size - 0.2, -3.5, pos + size - 0.2]), 0.2, 10)
+
+        scene.objects.append(leftWall)
+        scene.objects.append(rightWall)
+        scene.objects.append(floor)
+        scene.objects.append(ceiling)
+        scene.objects.append(front)
+        scene.objects.append(back)
+        scene.objects.append(light)
+        scene.objects.append(light2)
+        scene.objects.append(quader)
+        scene.objects.append(cube)
+
     return scene
 
 
@@ -160,7 +241,7 @@ def ScaleImageLog(image):
     return image / image.max()
 
 
-integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0, False, 2, renderDirectLight=False, fillCache=True,
+integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0, False, 2, renderDirectLight=True, fillCache=True,
                                   directLightSampleCount=64)
 scene = createScene("cornell")
 
