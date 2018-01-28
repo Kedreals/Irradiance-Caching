@@ -30,6 +30,36 @@ def createScene(name="simple"):
 
         scene.objects.append(sphere)
         scene.objects.append(plane)
+    elif name == "cornell":
+        size = 4
+        pos = 3
+        leftWall = Rectangle(pos=np.array([0, -size, pos]), normal=np.array([0, 1, 0]), bounds=np.array([size, size]),
+                             color=np.array([1., 0.2, 0.2]))
+        rightWall = Rectangle(pos=np.array([0, size, pos]), normal=np.array([0, -1, 0]), bounds=np.array([size, size]),
+                              color=np.array([0.2, 1., 0.2]))
+        floor = Rectangle(pos=np.array([size, 0, pos]), normal=np.array([-1, 0, 0]), bounds=np.array([size, size]),
+                          color=np.array([1., 1., 1.]))
+        ceiling = Rectangle(pos=np.array([-size, 0, pos]), normal=np.array([1, 0, 0]), bounds=np.array([size, size]),
+                            color=np.array([1., 1., 1.]))
+        front = Rectangle(pos=np.array([0, 0, pos-size]), normal=np.array([0, 0, 1]), bounds=np.array([size, size]),
+                          color=np.array([1., 1., 1.]))
+        back = Rectangle(pos=np.array([0, 0, pos+size]), normal=np.array([0, 0, -1]), bounds=np.array([size, size]),
+                         color=np.array([1., 1., 1.]))
+        light = Rectangle(pos=np.array([-size + 0.001, 0, pos+size/2]), normal=np.array([1, 0, 0]), bounds=np.array([0.5, 1]),
+                          color=np.array([1., 1., 0.7]), ell=10)
+
+        quader = Cuboid(pos=np.array([1.5, -1.25, pos+size-1.5]), bounds=np.array([2.5, 1, 1]), rotation=np.array([-35.*np.pi/180., 0, 0]))
+        cube = Cuboid(pos=np.array([3, 1.25, pos+size-2.5]), bounds=np.array([1., 1., 1.]), rotation=np.array([35.*np.pi/180, 0, 0]))
+
+        scene.objects.append(leftWall)
+        scene.objects.append(rightWall)
+        scene.objects.append(floor)
+        scene.objects.append(ceiling)
+        scene.objects.append(front)
+        scene.objects.append(back)
+        scene.objects.append(light)
+        scene.objects.append(quader)
+        scene.objects.append(cube)
     elif name == "box":
 
         size = 4
@@ -130,8 +160,9 @@ def ScaleImageLog(image):
     return image / image.max()
 
 
-integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0, False, 2)
-scene = createScene("box")
+integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0, False, 2, renderDirectLight=False, fillCache=True,
+                                  directLightSampleCount=64)
+scene = createScene("cornell")
 
 resolution = 64
 

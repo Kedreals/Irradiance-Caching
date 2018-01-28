@@ -22,10 +22,11 @@ import time
 class IrradianceIntegrator(Integrator):
 
     def __init__(self, minPixelDist, maxPixelDist, minWeight, maxCosAngleDiff, showSamplePoints=False,
-                 maxBounceDepth=2):
+                 maxBounceDepth=2, renderDirectLight = True, fillCache = False, directLightSampleCount = 64):
 
         super().__init__()
 
+        self.directLightSampleCount = directLightSampleCount
         # pbrt 787
         self.minPixelDist = minPixelDist
         self.maxPixelDist = maxPixelDist
@@ -38,6 +39,8 @@ class IrradianceIntegrator(Integrator):
         self.cache = []
         [self.cache.append(Octree([0.0, 0.0, 0.0], 50, [])) for i in range(maxBounceDepth + 1)]
         self.parallel = False
+        self.renderDirectLight = renderDirectLight
+        self.completelyFillCache = fillCache
 
     def generateSample(self, intersection, scene, camera, ray, depth=0):
         sample = Irradiance_Sample(intersection.pos, intersection.n)
@@ -171,11 +174,44 @@ class IrradianceIntegrator(Integrator):
 
         return res #+ intersection.ell
 
+    def FillCacheComplete(self, camera, scene):
+        print("\033[32mInfo\033[30m: Fill cache Completely")
+        print("\033[32mInfo\033[30m: Initial fill")
+        self.fillCache(camera, scene)
+        print("\033[32mInfo\033[30m: Initial fill complete")
+        print("\033[32mInfo\033[30m: Begin the complete fill")
+        s = time.perf_counter()
+        for i in range(camera.image.shape[0]):
+            print("\033[32mInfo\033[30m:\033[36m", int(10000*i/camera.image.shape[0])/100, "\033[30m% of the cache is filled")
+            for j in range(camera.image.shape[1]):
+                r = camera.generateRay(i, j)
+                intersection = Intersection()
+
+                if scene.intersect(r, intersection):
+                    for k in range(self.maxBounceDepth, 0, -1):
+                        interpolatedPoint = Irradiance_ProcessData(intersection.pos, intersection.n, self.minWeight, self.maxCosAngleDiff)
+                        interpval = self.getInterpolatedValue(interpolatedPoint, k)
+
+                        if (interpval < 0).any():
+                            self.generateSample(intersection, scene, camera, r, k)
+        e = time.perf_counter()
+        seconds = e-s
+        m = int(seconds/60)
+        seconds = seconds%60
+        h = int(m/60)
+        m = m % 60
+        print("\033[32mInfo\033[30m: completely filling the cache took", h, ":", m, ":", seconds)
+
+
     def ell(self, scene, ray, camera):
         #very first call for ell() means the cache has to be filled
+
         if ((ray.pixel[0] == 0) & (ray.pixel[1] == 0)):
             start = time.perf_counter()
-            self.fillCache(camera, scene)
+            if self.completelyFillCache:
+                self.FillCacheComplete(camera, scene)
+            else:
+                self.fillCache(camera, scene)
             end = time.perf_counter()
             s = end - start
             m = int(s / 60)
@@ -186,10 +222,6 @@ class IrradianceIntegrator(Integrator):
             print("filling cache took:", h, "h ", m, "min ", s, "s")
             for i in range(len(self.cache)):
                 print("In cache depth: ", i, "are ", self.cache[i].objCount, "samples")
-            #obsolete, because cannot iterate through octree
-            #for i in range(len(self.cache)):
-            #   ze = sum(s.irradiance == 0 for s in self.cache[i])
-            #    print("In cache depth: ", i, " have ä", ze, " of ", len(self.cache[i]), "elements 0 (ir)radiance")
 
         intersection = Intersection()
         val = np.array([0.0, 0., 0.])
@@ -215,14 +247,16 @@ class IrradianceIntegrator(Integrator):
                 val += e
 
             #compute direct light
-            sample = Irradiance_Sample(intersection.pos, intersection.n)
-            self.MonteCarlo(intersection, scene, sampleCount=64, sample=sample)
+            if self.renderDirectLight:
+                sample = Irradiance_Sample(intersection.pos, intersection.n)
+                self.MonteCarlo(intersection, scene, sampleCount=self.directLightSampleCount, sample=sample)
 
-            #val += sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n)
+                val += sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n)
+                val += intersection.ell
             if(val < 0).any():
                 print("light value is negative :", val)
 
-        return (val) * intersection.color
+        return val * intersection.color
 
 
     def getInterpolatedValue(self, interpolationPoint, depth):
