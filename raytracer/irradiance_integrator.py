@@ -49,8 +49,8 @@ class IrradianceIntegrator(Integrator):
 
         # generate a sample for irradiance
         if (depth > 0):
-            numSample = minSamples  # * depth
-            for i in range(numSample):
+            numSample = np.min([self.directLightSampleCount / 2, minSamples * (self.maxBounceDepth - depth+1)])
+            for i in range(int(numSample)):
                 h2Vec = self.getCosineWeightedPointH2()
                 d = self.transformH2toR3(h2Vec, intersection.n)
                 r = Ray(intersection.pos + 0.001 * intersection.n, d)
@@ -92,7 +92,7 @@ class IrradianceIntegrator(Integrator):
             sample.rotGrad *= np.pi/numSample
         else:
             # generate a sample for direct light
-            l = self.MonteCarlo(intersection, scene, minSamples, sample) #+ intersection.ell
+            l = self.MonteCarlo(intersection, scene, self.directLightSampleCount, sample) #+ intersection.ell
 
         pixelSpacing = self.computeIntersectionPixelSpacing(camera, ray, intersection)
         sample.irradiance = l

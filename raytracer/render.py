@@ -46,7 +46,7 @@ def createScene(name="simple"):
         back = Rectangle(pos=np.array([0, 0, pos+size]), normal=np.array([0, 0, -1]), bounds=np.array([size, size]),
                          color=np.array([1., 1., 1.]))
         light = Rectangle(pos=np.array([-size + 0.001, 0, pos+size/2]), normal=np.array([1, 0, 0]), bounds=np.array([0.5, 1]),
-                          color=np.array([1., 1., 0.7]), ell=10)
+                          color=np.array([1., 1., 0.7]), ell=1)
 
         quader = Cuboid(pos=np.array([1.5, -1.25, pos+size-1.5]), bounds=np.array([2.5, 1, 1]), rotation=np.array([-35.*np.pi/180., 0, 0]))
         cube = Cuboid(pos=np.array([3, 1.25, pos+size-2.5]), bounds=np.array([1., 1., 1.]), rotation=np.array([35.*np.pi/180, 0, 0]))
@@ -160,11 +160,11 @@ def ScaleImageLog(image):
     return image / image.max()
 
 
-integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0, False, 2, renderDirectLight=False, fillCache=True,
-                                  directLightSampleCount=64)
+integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0, False, 4, renderDirectLight=True, fillCache=True,
+                                  directLightSampleCount=1024)
 scene = createScene("cornell")
 
-resolution = 64
+resolution = 512
 
 start = time.perf_counter()
 im = render(resolution, resolution, scene, integrator)
