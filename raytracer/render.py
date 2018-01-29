@@ -24,6 +24,7 @@ from multiprocessing import Pool
 def createScene(name="simple"):
     scene = Scene()
 
+
     if name == "simple":
         plane = Rectangle(np.array([1., 0, 3.0]), np.array([-1., 0., 0.]), 0.75 * np.array([1, 1]), 1)
         sphere = Sphere(np.array([0.0, 0.0, 3.0]), 1.0)
