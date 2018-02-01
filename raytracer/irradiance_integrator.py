@@ -49,7 +49,7 @@ class IrradianceIntegrator(Integrator):
 
         # generate a sample for irradiance
         if (depth > 0):
-            numSample = np.min([self.directLightSampleCount / 2, minSamples * (self.maxBounceDepth - depth+1)])
+            numSample = np.max([minSamples, self.directLightSampleCount / (2**depth)])
             for i in range(int(numSample)):
                 h2Vec = self.getCosineWeightedPointH2()
                 d = self.transformH2toR3(h2Vec, intersection.n)
