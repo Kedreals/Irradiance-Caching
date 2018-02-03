@@ -24,7 +24,7 @@ class Octree:
         return sum([1 for i in range(3) if abs(v[i]) <= size]) == 3
 
     def enlarge(self):
-        self.ObjPerLeaf *= 2
+        self.ObjPerLeaf += MAX_OBJ_PER_LEAF
 
     def split(self):
         check = list(itter.combinations(self.objData, 2))

@@ -242,8 +242,8 @@ def ScaleImageLog(image):
     return image / image.max()
 
 
-integrator = IrradianceIntegrator(1, 40, 0.4, np.pi / 4.0, False, 4, renderDirectLight=True, fillCache=True,
-                                  directLightSampleCount=2*1024)
+integrator = IrradianceIntegrator(1, 40, 0.2, np.pi / 4.0, False, 4, renderDirectLight=True, fillCache=True,
+                                  directLightSampleCount=1024)
 scene = createScene("hiddenlight")
 
 resolution = 512
