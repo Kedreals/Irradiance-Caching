@@ -47,7 +47,7 @@ def createScene(name="simple"):
         back = Rectangle(pos=np.array([0, 0, pos+size]), normal=np.array([0, 0, -1]), bounds=np.array([size, size]),
                          color=np.array([1., 1., 1.]))
         light = Rectangle(pos=np.array([-size + 0.001, 0, pos+size/2]), normal=np.array([1, 0, 0]), bounds=np.array([0.5, 1]),
-                          color=np.array([1., 1., 0.7]), ell=10)
+                          color=np.array([1., 1., 0.7]), ell=1000)
 
         quader = Cuboid(pos=np.array([1.5, -1.25, pos+size-1.5]), bounds=np.array([2.5, 1, 1]), rotation=np.array([-35.*np.pi/180., 0, 0]))
         cube = Cuboid(pos=np.array([3, 1.25, pos+size-2.5]), bounds=np.array([1., 1., 1.]), rotation=np.array([35.*np.pi/180, 0, 0]))
@@ -154,8 +154,8 @@ def createScene(name="simple"):
         cube = Cuboid(pos=np.array([3, 1.25, pos + size - 3.5]), bounds=np.array([1., 1., 1.]),
                       rotation=np.array([35. * np.pi / 180, 0, 0]))
 
-        light = Sphere(np.array([size - 0.5, 0.5, pos + size - 2.2]), 0.5, 10)
-        light2 = Sphere(np.array([size - 0.2, -3.5, pos + size - 0.2]), 0.2, 10)
+        light = Sphere(np.array([size - 0.5, 0.5, pos + size - 1.8]), 0.5, 100)
+        light2 = Sphere(np.array([size - 0.2, -3.5, pos + size - 0.2]), 0.2, 100)
 
         scene.objects.append(leftWall)
         scene.objects.append(rightWall)
