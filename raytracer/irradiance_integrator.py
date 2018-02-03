@@ -282,10 +282,18 @@ class IrradianceIntegrator(Integrator):
         #compute how much space in the world the current pixel overlaps
         #using differential geometry
         d = -np.dot(intersection.n, intersection.pos)
-        tx = -(np.dot(intersection.n, rayx.o) + d) / np.dot(intersection.n, rayx.d)
+        dottx = np.dot(intersection.n, rayx.d)
+        if dottx == 0.0:
+            print("dot product intersection.n, rayx.d is zero")
+            dottx = 0.00000000000000000000001
+        tx = -(np.dot(intersection.n, rayx.o) + d) / dottx
         px = rayx.o + tx * rayx.d
 
-        ty = -(np.dot(intersection.n, rayy.o) + d) / np.dot(intersection.n, rayy.d)
+        dotty = np.dot(intersection.n, rayy.d)
+        if dotty == 0.0:
+            print("dot product np.dot(intersection.n, rayy.d) is zero")
+            dotty = 0.00000000000000000000001
+        ty = -(np.dot(intersection.n, rayy.o) + d) / dotty
         py = rayy.o + ty * rayy.d
 
         dpdx = px - intersection.pos

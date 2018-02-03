@@ -242,9 +242,11 @@ def ScaleImageLog(image):
     return image / image.max()
 
 
-integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0, False, 4, renderDirectLight=True, fillCache=True,
+minweight = 0.4
+
+integrator = IrradianceIntegrator(1, 40, minweight, np.pi / 4.0, False, 4, renderDirectLight=True, fillCache=True,
                                   directLightSampleCount=1024)
-scene = createScene("cornell")
+scene = createScene("hiddenlight")
 
 resolution = 512
 
@@ -265,10 +267,10 @@ print("Execution time = ", hours, ":", minutes, ":", seconds)
 
 plt.figure()
 plt.imshow(ScaleImageSqrt(im))
-plt.title("Square root scaled image")
+plt.title("Square root scaled image %f" %minweight)
 
 plt.figure()
 plt.imshow(ScaleImageLog(im))
-plt.title("Logarithmically scaled image ")
+plt.title("Logarithmically scaled image %f" %minweight)
 plt.show()
 
