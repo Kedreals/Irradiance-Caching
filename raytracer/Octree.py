@@ -26,29 +26,30 @@ class Octree:
     def enlarge(self):
         self.ObjPerLeaf += MAX_OBJ_PER_LEAF
 
-    def split(self):
+    def split(self, rekursive = False):
         check = list(itter.combinations(self.objData, 2))
         b = np.array(list(map(collide, check)))
 
-        if b.all():
+        if b.all() or rekursive:
             self.enlarge()
             return
 
         for i in range(8):
             pos = (np.array([i % 2, int(i / 2) % 2, int(i / 4) % 2]) * 2 - np.ones(3)) * self.size / 2
             self.branches[i] = Octree(self.position + pos, self.size / 2, [])
+            self.branches[i].ObjPerLeaf = self.ObjPerLeaf
             for obj in self.objData:
                 if self.branches[i].collide(obj):
-                    self.branches[i].addObj(obj)
+                    self.branches[i].addObj(obj, True)
         self.objData = []
 
-    def addObj(self, objData):
+    def addObj(self, objData, rekursive = False):
         self.objCount += 1
         if self.isLeaf():
             self.objData.append(objData)
             # if is too much split
             if len(self.objData) >= self.ObjPerLeaf:
-                self.split()
+                self.split(rekursive)
         else:
             for i in range(8):
                 if self.branches[i].collide(objData):

@@ -242,7 +242,7 @@ def ScaleImageLog(image):
     return image / image.max()
 
 
-minweight = 0.4
+minweight = 0.2
 
 integrator = IrradianceIntegrator(1, 40, minweight, np.pi / 4.0, False, 4, renderDirectLight=True, fillCache=True,
                                   directLightSampleCount=1024)
