@@ -241,7 +241,7 @@ def ScaleImageLog(image):
     image = np.log10(image + 1)
     return image / image.max()
 
-def SetUpExperiment(irradianceIntegrator, number):
+def SetUpExperiment(irradianceIntegrator, number, sceneName = "hiddenlight"):
     minPixelDist = 1
     maxPixelDist = 40
     minWeight = 0.1
@@ -253,35 +253,31 @@ def SetUpExperiment(irradianceIntegrator, number):
     directLightSampleCount = 1024
     useWard = False
     useRotGrad = False
-    scene = None
+    scene = createScene(sceneName)
 
     if number == 0:
-        scene = createScene("hiddenlight")
+        showSamplePoints = True
+        maxBounceDepth = 4
+        fillCache = True
     elif number == 1:
         minWeight = 0.2
-        scene = createScene("hiddenlight")
     elif number == 2:
         maxBounceDepth = 4
-        scene = createScene("hiddenlight")
     elif number == 3:
         fillCache = True
-        scene = createScene("hiddenlight")
     elif number == 4:
         directLightSampleCount = 2048
-        scene = createScene("hiddenlight")
     elif number == 5:
         useWard = True
-        scene = createScene("hiddenlight")
     elif number == 6:
         useRotGrad = True
-        scene = createScene("hiddenlight")
 
     irradianceIntegrator.minPixelDist = minPixelDist
     irradianceIntegrator.maxPixelDist = maxPixelDist
     irradianceIntegrator.minWeight = minWeight
     irradianceIntegrator.maxCosAngleDiff = maxCosAngleDiff
     irradianceIntegrator.showSamples = showSamplePoints
-    irradianceIntegrator.maxBounceDepth = maxBounceDepth
+    irradianceIntegrator.SetMaxBounceDepth(maxBounceDepth)
     irradianceIntegrator.renderDirectLight = renderDirectLight
     irradianceIntegrator.completelyFillCache = fillCache
     irradianceIntegrator.directLightSampleCount = directLightSampleCount

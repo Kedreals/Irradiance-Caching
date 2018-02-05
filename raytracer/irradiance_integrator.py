@@ -45,6 +45,11 @@ class IrradianceIntegrator(Integrator):
         self.useWard = useWard
         self.useRotGrad = useRotGrad
 
+    def SetMaxBounceDepth(self, maxBounceDepth):
+        self.maxBounceDepth = maxBounceDepth
+        self.cache = []
+        [self.cache.append(Octree([0, 0, 0], 50, [])) for i in range(maxBounceDepth + 1)]
+
     def generateSample(self, intersection, scene, camera, ray, depth=0):
         sample = Irradiance_Sample(intersection.pos, intersection.n)
         minSamples = 64
