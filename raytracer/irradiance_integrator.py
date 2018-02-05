@@ -22,7 +22,8 @@ import time
 class IrradianceIntegrator(Integrator):
 
     def __init__(self, minPixelDist, maxPixelDist, minWeight, maxCosAngleDiff, showSamplePoints=False,
-                 maxBounceDepth=2, renderDirectLight = True, fillCache = False, directLightSampleCount = 64):
+                 maxBounceDepth=2, renderDirectLight = True, fillCache = False, directLightSampleCount = 64,
+                 useWard = False, useRotGrad = True):
 
         super().__init__()
 
@@ -41,6 +42,8 @@ class IrradianceIntegrator(Integrator):
         self.parallel = False
         self.renderDirectLight = renderDirectLight
         self.completelyFillCache = fillCache
+        self.useWard = useWard
+        self.useRotGrad = useRotGrad
 
     def generateSample(self, intersection, scene, camera, ray, depth=0):
         sample = Irradiance_Sample(intersection.pos, intersection.n)
@@ -305,12 +308,12 @@ class IrradianceIntegrator(Integrator):
     #interpolate with error calulation used in pbrt book
     def interpolate(self, newPoint, sample, useWard = False, useRotGrad = True):
 
-        if(useWard):
+        if(self.useWard):
             #use wards weighting function
             weight = 1 / (np.linalg.norm(newPoint.pos - sample.pos) / sample.maxDist + np.sqrt(
                 1 - np.dot(newPoint.normal, sample.normal)) + 0.00000000000001)
             newPoint.irradiance += weight * sample.irradiance
-            if(useRotGrad):
+            if(self.useRotGrad):
                 newPoint.irradiance += weight * np.dot(sample.rotGrad, np.cross(sample.normal, newPoint.normal))
             newPoint.avgLightDir += weight * sample.avgLightDir
             newPoint.sumWeight += weight
@@ -330,7 +333,7 @@ class IrradianceIntegrator(Integrator):
             if (err < 1.0):
                 weight = 1.0 - err
                 newPoint.irradiance += weight * sample.irradiance
-                if (useRotGrad):
+                if (self.useRotGrad):
                     newPoint.irradiance += weight * np.dot(sample.rotGrad, np.cross(sample.normal, newPoint.normal))
                 newPoint.avgLightDir += weight * sample.avgLightDir
                 newPoint.sumWeight += weight

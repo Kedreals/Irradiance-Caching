@@ -241,12 +241,56 @@ def ScaleImageLog(image):
     image = np.log10(image + 1)
     return image / image.max()
 
+def SetUpExperiment(irradianceIntegrator, number):
+    minPixelDist = 1
+    maxPixelDist = 40
+    minWeight = 0.1
+    maxCosAngleDiff = np.pi/4.0
+    showSamplePoints = False
+    maxBounceDepth = 2
+    renderDirectLight = True
+    fillCache = False
+    directLightSampleCount = 1024
+    useWard = False
+    useRotGrad = False
+    scene = None
 
-minweight = 0.2
+    if number == 0:
+        scene = createScene("hiddenlight")
+    elif number == 1:
+        minWeight = 0.2
+        scene = createScene("hiddenlight")
+    elif number == 2:
+        maxBounceDepth = 4
+        scene = createScene("hiddenlight")
+    elif number == 3:
+        fillCache = True
+        scene = createScene("hiddenlight")
+    elif number == 4:
+        directLightSampleCount = 2048
+        scene = createScene("hiddenlight")
+    elif number == 5:
+        useWard = True
+        scene = createScene("hiddenlight")
+    elif number == 6:
+        useRotGrad = True
+        scene = createScene("hiddenlight")
 
-integrator = IrradianceIntegrator(1, 40, minweight, np.pi / 4.0, False, 4, renderDirectLight=True, fillCache=True,
-                                  directLightSampleCount=1024)
-scene = createScene("hiddenlight")
+    irradianceIntegrator.minPixelDist = minPixelDist
+    irradianceIntegrator.maxPixelDist = maxPixelDist
+    irradianceIntegrator.minWeight = minWeight
+    irradianceIntegrator.maxCosAngleDiff = maxCosAngleDiff
+    irradianceIntegrator.showSamples = showSamplePoints
+    irradianceIntegrator.maxBounceDepth = maxBounceDepth
+    irradianceIntegrator.renderDirectLight = renderDirectLight
+    irradianceIntegrator.completelyFillCache = fillCache
+    irradianceIntegrator.directLightSampleCount = directLightSampleCount
+    irradianceIntegrator.useWard = useWard
+    irradianceIntegrator.useRotGrad = useRotGrad
+    return scene
+
+integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0)
+scene = SetUpExperiment(integrator, 0)
 
 resolution = 512
 
