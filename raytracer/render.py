@@ -269,21 +269,60 @@ def SetUpExperiment(irradianceIntegrator, number, sceneName = "hiddenlight"):
     scene = createScene(sceneName)
 
     if number == 0:
-        showSamplePoints = True
-        maxBounceDepth = 2
+        minWeight = 0.1
+        directLightSampleCount = 1024
+        useRotGrad = False
         fillCache = True
+        maxBounceDepth = 2
+        useWard = False
+
     elif number == 1:
         minWeight = 0.2
-    elif number == 2:
-        maxBounceDepth = 4
-    elif number == 3:
+        directLightSampleCount = 1024
+        useRotGrad = False
         fillCache = True
-    elif number == 4:
-        directLightSampleCount = 2048
-    elif number == 5:
-        useWard = True
-    elif number == 6:
+        maxBounceDepth = 2
+        useWard = False
+
+    elif number == 2:
+        minWeight = 0.1
+        directLightSampleCount = 1024
         useRotGrad = True
+        fillCache = True
+        maxBounceDepth = 2
+        useWard = False
+
+    elif number == 3:
+        minWeight = 0.1
+        directLightSampleCount = 1024
+        useRotGrad = False
+        fillCache = False
+        maxBounceDepth = 2
+        useWard = False
+
+    elif number == 4:
+        minWeight = 0.1
+        directLightSampleCount = 1024
+        useRotGrad = False
+        fillCache = True
+        maxBounceDepth = 2
+        useWard = True
+
+    elif number == 5:
+        minWeight = 0.1
+        directLightSampleCount = 1024
+        useRotGrad = True
+        fillCache = True
+        maxBounceDepth = 2
+        useWard = True
+
+    elif number == 6:
+        minWeight = 0.1
+        directLightSampleCount = 1024
+        useRotGrad = False
+        fillCache = True
+        maxBounceDepth = 4
+        useWard = False
 
     irradianceIntegrator.minPixelDist = minPixelDist
     irradianceIntegrator.maxPixelDist = maxPixelDist
