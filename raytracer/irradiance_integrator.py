@@ -110,7 +110,7 @@ class IrradianceIntegrator(Integrator):
             sample.avgLightDir /= norm
 
         if ((self.showSamples) & (depth == self.maxBounceDepth)):
-            camera.image[ray.pixel[0], ray.pixel[1], :] = [1., 0., 0.]
+            camera.imageDepths[-1][ray.pixel[0], ray.pixel[1], :] = [1., 0., 0.]
 
         if np.dot(sample.avgLightDir, sample.normal) < 0:
             print("\033[31mERROR\033[30m: Sample was generated with avgLightDir pointing in the wrong half space")
@@ -202,6 +202,7 @@ class IrradianceIntegrator(Integrator):
 
                         if (interpval < 0).any():
                             self.generateSample(intersection, scene, camera, r, k)
+
         e = time.perf_counter()
         seconds = e-s
         m = int(seconds/60)
@@ -213,6 +214,10 @@ class IrradianceIntegrator(Integrator):
 
     def ell(self, scene, ray, camera):
         #very first call for ell() means the cache has to be filled
+        cameraImageCount = self.maxBounceDepth + 1 + (1 if self.showSamples else 0)
+        if len(camera.imageDepths) < cameraImageCount:
+            for i in range(len(camera.imageDepths), cameraImageCount):
+                camera.addImage()
 
         if ((ray.pixel[0] == 0) & (ray.pixel[1] == 0)):
             start = time.perf_counter()
@@ -252,12 +257,15 @@ class IrradianceIntegrator(Integrator):
                 if (e < 0).any():
                     print(e)
 
+                camera.imageDepths[i][ray.pixel[0], ray.pixel[1], :] = e
                 val += e
 
             #compute direct light
             if self.renderDirectLight:
                 sample = Irradiance_Sample(intersection.pos, intersection.n)
                 self.MonteCarlo(intersection, scene, sampleCount=self.directLightSampleCount, sample=sample)
+
+                camera.imageDepths[0][ray.pixel[0], ray.pixel[1], :] = intersection.color * (sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n) + intersection.ell)
 
                 val += sample.irradiance * intersection.BSDF(sample.avgLightDir, -ray.d, intersection.n)
                 val += intersection.ell

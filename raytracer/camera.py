@@ -18,6 +18,7 @@ class Camera :
         self.fov = (90.0 * np.pi) / 180.0
         self.flength = 1.0
         self.image = np.zeros( [res_x, res_y, 3])
+        self.imageDepths = []
     
     def generateRay( self, pix_x, pix_y) :
         
@@ -31,4 +32,6 @@ class Camera :
         
         r = ray.Ray( self.pos, dir, np.array([pix_x, pix_y]))
         return r
-    
+
+    def addImage(self):
+        self.imageDepths.append(np.zeros(self.image.shape))
