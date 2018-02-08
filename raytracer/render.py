@@ -22,6 +22,7 @@ import time
 from multiprocessing import Pool
 
 import matplotlib.image as mplim
+import os
 
 def createScene(name="simple"):
     scene = Scene()
@@ -199,7 +200,7 @@ def renderList(res_x, res_y, scene, integrator):
     return cam.image
 
 
-def render(res_x, res_y, scene, integrator, showImages=False, experiment = 0):
+def render(res_x, res_y, scene, integrator, showImages=False, experiment = -1):
     cam = Camera(res_x, res_y)
 
     for ix in range(res_x):
@@ -216,14 +217,14 @@ def render(res_x, res_y, scene, integrator, showImages=False, experiment = 0):
     for i in range(len(integrator.cache)):
         print("\033[32mINFO:\033[30m Cache Level", i, "has", integrator.cache[i].objCount,"many samples")
 
+    if experiment >= 0:
+        mplim.imsave("Experiment%i/Bounce%i.png" % (experiment, i), ScaleImageLog(cam.imageDepths[i]))
     if showImages:
         for i in range(len(cam.imageDepths)-1):
             plt.figure()
-
-            mplim.imsave("Experiment%i/Bounce%i.png" %(experiment, i), ScaleImageLog(cam.imageDepths[i]))
             plt.imshow(ScaleImageLog(cam.imageDepths[i]))
             plt.title("image Bounce Depth %f" %i)
-        mplim.imsave("Experiment%i/SamplePoints.png" %i, ScaleImageLog(cam.imageDepths[-1]))
+        mplim.imsave("Experiment%i/SamplePoints.png" %experiment, ScaleImageLog(cam.imageDepths[-1]))
 
 
     return cam.image
@@ -300,11 +301,12 @@ def SetUpExperiment(irradianceIntegrator, number, sceneName = "hiddenlight"):
 experiment = 0
 integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0)
 scene = SetUpExperiment(integrator, experiment)
+os.makedirs("./Experiment%i" %experiment, exist_ok=True)
 
-resolution = 64
+resolution = 512
 
 start = time.perf_counter()
-im = render(resolution, resolution, scene, integrator, True, experiment)
+im = render(resolution, resolution, scene, integrator, False, experiment)
 end = time.perf_counter()
 
 seconds = end - start
@@ -314,13 +316,6 @@ hours = int(minutes / 60)
 minutes = minutes % 60
 
 print("Execution time = ", hours, ":", minutes, ":", seconds)
-
-#plt.figure()
-#plt.imshow(im)
-
-plt.figure()
-plt.imshow(ScaleImageSqrt(im))
-plt.title("Square root scaled image %f" %0.1)
 
 plt.figure()
 plt.imshow(ScaleImageLog(im))
