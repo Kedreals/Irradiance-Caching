@@ -218,13 +218,15 @@ def render(res_x, res_y, scene, integrator, showImages=False, experiment = -1):
         print("\033[32mINFO:\033[30m Cache Level", i, "has", integrator.cache[i].objCount,"many samples")
 
     if experiment >= 0:
-        mplim.imsave("Experiment%i/Bounce%i.png" % (experiment, i), ScaleImageLog(cam.imageDepths[i]))
+        for i in range(len(cam.imageDepths)-1):
+            mplim.imsave("Experiment%i/Bounce%i.png" % (experiment, i), ScaleImageLog(cam.imageDepths[i]))
+        mplim.imsave("Experiment%i/SamplePoints.png" %experiment, ScaleImageLog(cam.imageDepths[-1]))
     if showImages:
         for i in range(len(cam.imageDepths)-1):
             plt.figure()
             plt.imshow(ScaleImageLog(cam.imageDepths[i]))
             plt.title("image Bounce Depth %f" %i)
-        mplim.imsave("Experiment%i/SamplePoints.png" %experiment, ScaleImageLog(cam.imageDepths[-1]))
+        
 
 
     return cam.image
@@ -301,7 +303,7 @@ def SetUpExperiment(irradianceIntegrator, number, sceneName = "hiddenlight"):
         useWard = False
 
     elif number == 4:
-        minWeight = 0.1
+        minWeight = 0.8
         directLightSampleCount = 1024
         useRotGrad = False
         fillCache = True
@@ -309,7 +311,7 @@ def SetUpExperiment(irradianceIntegrator, number, sceneName = "hiddenlight"):
         useWard = True
 
     elif number == 5:
-        minWeight = 0.1
+        minWeight = 0.8
         directLightSampleCount = 1024
         useRotGrad = True
         fillCache = True
@@ -319,6 +321,14 @@ def SetUpExperiment(irradianceIntegrator, number, sceneName = "hiddenlight"):
     elif number == 6:
         minWeight = 0.1
         directLightSampleCount = 1024
+        useRotGrad = False
+        fillCache = True
+        maxBounceDepth = 4
+        useWard = False
+        
+    elif number == 7:
+        minWeight = 0.2
+        directLightSampleCount = 2048
         useRotGrad = False
         fillCache = True
         maxBounceDepth = 4
@@ -337,28 +347,31 @@ def SetUpExperiment(irradianceIntegrator, number, sceneName = "hiddenlight"):
     irradianceIntegrator.useRotGrad = useRotGrad
     return scene
 
-experiment = 0
-integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0)
-scene = SetUpExperiment(integrator, experiment)
-os.makedirs("./Experiment%i" %experiment, exist_ok=True)
+for experiment in range(0, 8, 4):
+    print("running Experiment%i" %experiment)
+    integrator = IrradianceIntegrator(1, 40, 0.1, np.pi / 4.0)
+    scene = SetUpExperiment(integrator, experiment)
+    os.makedirs("./Experiment%i" %experiment, exist_ok=True)
 
-resolution = 512
+    resolution = 512
+    if experiment == 7:
+        resolution = 1024
 
-start = time.perf_counter()
-im = render(resolution, resolution, scene, integrator, False, experiment)
-end = time.perf_counter()
+    start = time.perf_counter()
+    im = render(resolution, resolution, scene, integrator, False, experiment)
+    end = time.perf_counter()
 
-seconds = end - start
-minutes = int(seconds / 60)
-seconds = seconds % 60
-hours = int(minutes / 60)
-minutes = minutes % 60
+    seconds = end - start
+    minutes = int(seconds / 60)
+    seconds = seconds % 60
+    hours = int(minutes / 60)
+    minutes = minutes % 60
 
-print("Execution time = ", hours, ":", minutes, ":", seconds)
+    print("Execution time of Experiment%i = " %experiment, hours, ":", minutes, ":", seconds)
 
-plt.figure()
-plt.imshow(ScaleImageLog(im))
-mplim.imsave("Experiment%i/Image.png"%experiment, ScaleImageLog(im))
-plt.title("Logarithmically scaled image %f" %0.1)
+    plt.figure()
+    plt.imshow(ScaleImageLog(im))
+    mplim.imsave("Experiment%i/Image.png"%experiment, ScaleImageLog(im))
+    plt.title("Logarithmically scaled image %f" %0.1)
 plt.show()
 
